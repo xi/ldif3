@@ -235,6 +235,8 @@ class LDIFParser(object):
             else:
                 yield lines
                 lines = []
+        if lines:
+            yield lines
 
     def _parse_attr(self, line):
         """Parse a single attribute type/value pair."""
