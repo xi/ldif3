@@ -1,4 +1,4 @@
-"""ldif - generate and parse LDIF data (see RFC 2849)."""
+"""ldif3 - generate and parse LDIF data (see RFC 2849)."""
 
 from __future__ import unicode_literals
 
