@@ -61,7 +61,8 @@ class LDIFWriter(object):
     via URLs.
     """
 
-    def __init__(self, output_file, base64_attrs=None, cols=76, line_sep='\n'):
+    def __init__(
+            self, output_file, base64_attrs=None, cols=76, line_sep=b'\n'):
         """
         output_file
             file object for output
@@ -89,7 +90,7 @@ class LDIFWriter(object):
             self._output_file.write(line[0:self._cols])
             self._output_file.write(self._line_sep)
             while pos < len(line):
-                self._output_file.write(' ')
+                self._output_file.write(b' ')
                 end = min(len(line), pos + self._cols - 1)
                 self._output_file.write(line[pos:end])
                 self._output_file.write(self._line_sep)
@@ -107,10 +108,13 @@ class LDIFWriter(object):
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
         if self._needs_base64_encoding(attr_type, attr_value):
-            encoded = base64.encodestring(attr_value).replace('\n', '')
-            self._fold_line(':: '.join([attr_type, encoded]))
+            encoded = base64.encodestring(attr_value.encode('utf8'))\
+                .replace(b'\n', b'')\
+                .decode('utf8')
+            line = ':: '.join([attr_type, encoded])
         else:
-            self._fold_line(': '.join([attr_type, attr_value]))
+            line = ': '.join([attr_type, attr_value])
+        self._fold_line(line.encode('utf8'))
 
     def _unparse_entry_record(self, entry):
         """
@@ -154,7 +158,7 @@ class LDIFWriter(object):
                 self._unparse_attr(mod_type, mod_val)
 
             if mod_len == 3:
-                self._output_file.write('-' + self._line_sep)
+                self._output_file.write(b'-' + self._line_sep)
 
     def unparse(self, dn, record):
         """
@@ -180,9 +184,9 @@ class LDIFParser(object):
 
     def _strip_line_sep(self, s):
         """Strip trailing line separators from s, but no other whitespaces."""
-        if s[-2:] == '\r\n':
+        if s[-2:] == b'\r\n':
             return s[:-2]
-        elif s[-1:] == '\n':
+        elif s[-1:] == b'\n':
             return s[:-1]
         else:
             return s
@@ -192,7 +196,7 @@ class LDIFParser(object):
             input_file,
             ignored_attr_types=None,
             process_url_schemes=None,
-            line_sep='\n'):
+            line_sep=b'\n'):
         """
         Parameters:
         input_file
@@ -218,11 +222,11 @@ class LDIFParser(object):
             line = self._strip_line_sep(line)
 
             nextline = self._input_file.readline()
-            while nextline and nextline[0] == ' ':
+            while nextline and nextline[:1] == b' ':
                 line += self._strip_line_sep(nextline)[1:]
                 nextline = self._input_file.readline()
 
-            if not line.startswith('#'):
+            if not line.startswith(b'#'):
                 yield line
             line = nextline
 
@@ -240,44 +244,41 @@ class LDIFParser(object):
 
     def _parse_attr(self, line):
         """Parse a single attribute type/value pair."""
-        colon_pos = line.index(':')
+        colon_pos = line.index(b':')
         attr_type = line[0:colon_pos]
         value_spec = line[colon_pos:colon_pos + 2]
-        if value_spec == '::':
+        if value_spec == b'::':
             attr_value = base64.decodestring(line[colon_pos + 2:])
-        elif value_spec == ':<':
+        elif value_spec == b':<':
             url = line[colon_pos + 2:].strip()
-            attr_value = None
+            attr_value = b''
             if self._process_url_schemes:
                 u = urlparse(url)
                 if u[0] in self._process_url_schemes:
-                    attr_value = urlopen(url).read()
-        elif value_spec == ':\r\n' or value_spec == '\n':
-            attr_value = ''
+                    attr_value = urlopen(url.decode('ascii')).read()
+        elif value_spec == b':\r\n' or value_spec == b'\n':
+            attr_value = b''
         else:
             attr_value = line[colon_pos + 2:].lstrip()
-        return attr_type, attr_value
+        return attr_type.decode('utf8'), attr_value.decode('utf8')
 
     def _check_dn(self, dn, attr_value):
         """Check dn attribute for issues."""
         if dn is not None:
-            raise ValueError('Two lines starting with dn: '
-                'in one record.')
+            raise ValueError('Two lines starting with dn: in one record.')
         if not is_dn(attr_value):
             raise ValueError('No valid string-representation of '
-                'distinguished name %s.' % (repr(attr_value)))
+                'distinguished name %s.' % attr_value)
 
     def _check_changetype(self, dn, changetype, attr_value):
         """Check changetype attribute for issues."""
         if dn is None:
-            raise ValueError('Read changetype: before getting '
-                'valid dn: line.')
+            raise ValueError('Read changetype: before getting valid dn: line.')
         if changetype is not None:
             raise ValueError('Two lines starting with changetype: '
                 'in one record.')
         if attr_value not in CHANGE_TYPES:
-            raise ValueError('changetype value %s is invalid.'
-                % (repr(attr_value)))
+            raise ValueError('changetype value %s is invalid.' % attr_value)
 
     def _parse_record(self, lines):
         """Parse a singel record from a list of lines."""

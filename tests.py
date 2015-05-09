@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 
 import unittest
 
-from io import StringIO
+from io import BytesIO
 
 import ldif3
 
 
-BYTES = """version: 1
+BYTES = b"""version: 1
 dn: cn=Alice Alison,
  mail=alicealison@example.com
 objectclass: top
@@ -25,7 +25,7 @@ mail: foobar@example.org
 modifytimestamp: 4a463e9a
 """
 
-BYTES_OUT = """dn: cn=Alice Alison,mail=alicealison@example.com
+BYTES_OUT = b"""dn: cn=Alice Alison,mail=alicealison@example.com
 cn: Alison Alison
 mail: alicealison@example.com
 modifytimestamp: 4a463e9a
@@ -42,37 +42,37 @@ objectclass: person
 """
 
 LINES = [
-    "version: 1",
-    "dn: cn=Alice Alison,mail=alicealison@example.com",
-    "objectclass: top",
-    "objectclass: person",
-    "objectclass: organizationalPerson",
-    "cn: Alison Alison",
-    "mail: alicealison@example.com",
-    "modifytimestamp: 4a463e9a",
-    "",
-    "dn: mail=foobar@example.org",
-    "objectclass: top",
-    "objectclass:  person",
-    "mail: foobar@example.org",
-    "modifytimestamp: 4a463e9a",
+    b'version: 1',
+    b'dn: cn=Alice Alison,mail=alicealison@example.com',
+    b'objectclass: top',
+    b'objectclass: person',
+    b'objectclass: organizationalPerson',
+    b'cn: Alison Alison',
+    b'mail: alicealison@example.com',
+    b'modifytimestamp: 4a463e9a',
+    b'',
+    b'dn: mail=foobar@example.org',
+    b'objectclass: top',
+    b'objectclass:  person',
+    b'mail: foobar@example.org',
+    b'modifytimestamp: 4a463e9a',
 ]
 
 BLOCKS = [[
-    "version: 1",
-    "dn: cn=Alice Alison,mail=alicealison@example.com",
-    "objectclass: top",
-    "objectclass: person",
-    "objectclass: organizationalPerson",
-    "cn: Alison Alison",
-    "mail: alicealison@example.com",
-    "modifytimestamp: 4a463e9a",
+    b'version: 1',
+    b'dn: cn=Alice Alison,mail=alicealison@example.com',
+    b'objectclass: top',
+    b'objectclass: person',
+    b'objectclass: organizationalPerson',
+    b'cn: Alison Alison',
+    b'mail: alicealison@example.com',
+    b'modifytimestamp: 4a463e9a',
 ], [
-    "dn: mail=foobar@example.org",
-    "objectclass: top",
-    "objectclass:  person",
-    "mail: foobar@example.org",
-    "modifytimestamp: 4a463e9a",
+    b'dn: mail=foobar@example.org',
+    b'objectclass: top',
+    b'objectclass:  person',
+    b'mail: foobar@example.org',
+    b'modifytimestamp: 4a463e9a',
 ]]
 
 DNS = [
@@ -93,7 +93,7 @@ RECORDS = [{
     'objectclass': ['top', 'person'],
 }]
 
-URL = 'https://tools.ietf.org/rfc/rfc2849.txt'
+URL = b'https://tools.ietf.org/rfc/rfc2849.txt'
 URL_CONTENT = 'The LDAP Data Interchange Format (LDIF)'
 
 
@@ -113,22 +113,22 @@ class TestLower(unittest.TestCase):
 
 class TestIsDn(unittest.TestCase):
     def test_happy(self):
-        pass
+        pass  # TODO
 
 
 class TestLDIFParser(unittest.TestCase):
     def setUp(self):
-        self.stream = StringIO(BYTES)
+        self.stream = BytesIO(BYTES)
         self.p = ldif3.LDIFParser(self.stream)
 
     def test_strip_line_sep(self):
-        self.assertEqual(self.p._strip_line_sep('asd \n'), 'asd ')
-        self.assertEqual(self.p._strip_line_sep('asd\t\n'), 'asd\t')
-        self.assertEqual(self.p._strip_line_sep('asd\r\n'), 'asd')
-        self.assertEqual(self.p._strip_line_sep('asd\r\t\n'), 'asd\r\t')
-        self.assertEqual(self.p._strip_line_sep('asd\n\r'), 'asd\n\r')
-        self.assertEqual(self.p._strip_line_sep('asd'), 'asd')
-        self.assertEqual(self.p._strip_line_sep('  asd  '), '  asd  ')
+        self.assertEqual(self.p._strip_line_sep(b'asd \n'), b'asd ')
+        self.assertEqual(self.p._strip_line_sep(b'asd\t\n'), b'asd\t')
+        self.assertEqual(self.p._strip_line_sep(b'asd\r\n'), b'asd')
+        self.assertEqual(self.p._strip_line_sep(b'asd\r\t\n'), b'asd\r\t')
+        self.assertEqual(self.p._strip_line_sep(b'asd\n\r'), b'asd\n\r')
+        self.assertEqual(self.p._strip_line_sep(b'asd'), b'asd')
+        self.assertEqual(self.p._strip_line_sep(b'  asd  '), b'  asd  ')
 
     def test_iter_unfolded_lines(self):
         self.assertEqual(list(self.p._iter_unfolded_lines()), LINES)
@@ -163,23 +163,23 @@ class TestLDIFParser(unittest.TestCase):
         self.p._check_changetype('some dn', None, 'add')
 
     def test_parse_attr_base64(self):
-        attr_type, attr_value = self.p._parse_attr('foo:: YQpiCmM=\n')
+        attr_type, attr_value = self.p._parse_attr(b'foo:: YQpiCmM=\n')
         self.assertEqual(attr_type, 'foo')
         self.assertEqual(attr_value, 'a\nb\nc')
 
     def test_parse_attr_url(self):
-        self.p._process_url_schemes = ['https']
-        attr_type, attr_value = self.p._parse_attr('foo:< %s\n' % URL)
+        self.p._process_url_schemes = [b'https']
+        attr_type, attr_value = self.p._parse_attr(b'foo:< ' + URL + b'\n')
         self.assertIn(URL_CONTENT, attr_value)
 
     def test_parse_attr_url_all_ignored(self):
-        attr_type, attr_value = self.p._parse_attr('foo:< %s\n' % URL)
-        self.assertIsNone(attr_value)
+        attr_type, attr_value = self.p._parse_attr(b'foo:< ' + URL + b'\n')
+        self.assertEqual(attr_value, '')
 
     def test_parse_attr_url_this_ignored(self):
-        self.p._process_url_schemes = ['file']
-        attr_type, attr_value = self.p._parse_attr('foo:< %s\n' % URL)
-        self.assertIsNone(attr_value)
+        self.p._process_url_schemes = [b'file']
+        attr_type, attr_value = self.p._parse_attr(b'foo:< ' + URL + b'\n')
+        self.assertEqual(attr_value, '')
 
     def test_parse(self):
         items = list(self.p.parse())
@@ -193,28 +193,28 @@ class TestLDIFParser(unittest.TestCase):
 
 class TestLDIFWriter(unittest.TestCase):
     def setUp(self):
-        self.stream = StringIO()
+        self.stream = BytesIO()
         self.w = ldif3.LDIFWriter(self.stream)
 
     def test_fold_line_10_n(self):
         self.w._cols = 10
-        self.w._line_sep = '\n'
-        self.w._fold_line('abcdefghijklmnopqrstuvwxyz')
-        folded = 'abcdefghij\n klmnopqrs\n tuvwxyz\n'
+        self.w._line_sep = b'\n'
+        self.w._fold_line(b'abcdefghijklmnopqrstuvwxyz')
+        folded = b'abcdefghij\n klmnopqrs\n tuvwxyz\n'
         self.assertEqual(self.stream.getvalue(), folded)
 
     def test_fold_line_12_underscore(self):
         self.w._cols = 12
-        self.w._line_sep = '__'
-        self.w._fold_line('abcdefghijklmnopqrstuvwxyz')
-        folded = 'abcdefghijkl__ mnopqrstuvw__ xyz__'
+        self.w._line_sep = b'__'
+        self.w._fold_line(b'abcdefghijklmnopqrstuvwxyz')
+        folded = b'abcdefghijkl__ mnopqrstuvw__ xyz__'
         self.assertEqual(self.stream.getvalue(), folded)
 
     def test_fold_line_oneline(self):
         self.w._cols = 100
-        self.w._line_sep = '\n'
-        self.w._fold_line('abcdefghijklmnopqrstuvwxyz')
-        folded = 'abcdefghijklmnopqrstuvwxyz\n'
+        self.w._line_sep = b'\n'
+        self.w._fold_line(b'abcdefghijklmnopqrstuvwxyz')
+        folded = b'abcdefghijklmnopqrstuvwxyz\n'
         self.assertEqual(self.stream.getvalue(), folded)
 
     def test_needs_base64_encoding_forced(self):
@@ -233,28 +233,28 @@ class TestLDIFWriter(unittest.TestCase):
     def test_unparse_attr_base64(self):
         self.w._unparse_attr('foo', 'a\nb\nc')
         value = self.stream.getvalue()
-        self.assertEqual(value, 'foo:: YQpiCmM=\n')
+        self.assertEqual(value, b'foo:: YQpiCmM=\n')
 
     def test_unparse_entry_record(self):
         self.w._unparse_entry_record(RECORDS[0])
         value = self.stream.getvalue()
         self.assertEqual(value, (
-            'cn: Alison Alison\n'
-            'mail: alicealison@example.com\n'
-            'modifytimestamp: 4a463e9a\n'
-            'objectclass: top\n'
-            'objectclass: person\n'
-            'objectclass: organizationalPerson\n'))
+            b'cn: Alison Alison\n'
+            b'mail: alicealison@example.com\n'
+            b'modifytimestamp: 4a463e9a\n'
+            b'objectclass: top\n'
+            b'objectclass: person\n'
+            b'objectclass: organizationalPerson\n'))
 
     def test_unparse_changetype_add(self):
         self.w._unparse_changetype(2)
         value = self.stream.getvalue()
-        self.assertEqual(value, 'changetype: add\n')
+        self.assertEqual(value, b'changetype: add\n')
 
     def test_unparse_changetype_modify(self):
         self.w._unparse_changetype(3)
         value = self.stream.getvalue()
-        self.assertEqual(value, 'changetype: modify\n')
+        self.assertEqual(value, b'changetype: modify\n')
 
     def test_unparse_changetype_other(self):
         with self.assertRaises(ValueError):
