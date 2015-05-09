@@ -97,7 +97,7 @@ class LDIFWriter:
         self._line_sep = line_sep
         self.records_written = 0
 
-    def _unfold_line(self, line):
+    def _fold_line(self, line):
         """Write string line as one or more folded lines."""
         line_len = len(line)
         if line_len <= self._cols:
@@ -133,9 +133,9 @@ class LDIFWriter:
         """
         if self._needs_base64_encoding(attr_type, attr_value):
             encoded = base64.encodestring(attr_value).replace('\n', '')
-            self._unfold_line(':: '.join([attr_type, encoded]))
+            self._fold_line(':: '.join([attr_type, encoded]))
         else:
-            self._unfold_line(': '.join([attr_type, attr_value]))
+            self._fold_line(': '.join([attr_type, attr_value]))
 
     def _unparse_entry_record(self, entry):
         """
