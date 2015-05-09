@@ -313,10 +313,8 @@ class LDIFParser:
                 self.records_read < self._max_entries):
 
             # Reset record
-            version = None
             dn = None
             changetype = None
-            modop = None
             entry = {}
 
             attr_type, attr_value = self._parseAttrTypeandValue()
@@ -332,7 +330,7 @@ class LDIFParser:
                             'distinguished name %s.' % (repr(attr_value)))
                     dn = attr_value
                 elif attr_type == 'version' and dn is None:
-                    version = 1
+                    pass  # version = 1
                 elif attr_type == 'changetype':
                     # attr type and value pair was DN of LDIF record
                     if dn is None:
