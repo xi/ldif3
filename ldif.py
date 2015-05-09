@@ -243,32 +243,39 @@ class LDIFParser:
         This method should be implemented by applications using LDIFParser.
         """
 
-    def _unfold_line(self):
-        """Unfold several folded lines with trailing space into one line."""
-        unfolded_lines = [self._strip_line_sep(self._line)]
-        self._line = self._input_file.readline()
-        while self._line and self._line[0] == ' ':
-            unfolded_lines.append(self._strip_line_sep(self._line[1:]))
-            self._line = self._input_file.readline()
-        return ''.join(unfolded_lines)
+    def _iter_unfolded_lines(self):
+        """Iter input unfoled lines. Skip comments."""
+        line = self._input_file.readline()
+        while line:
+            line = self._strip_line_sep(line)
 
-    def _parse_attr(self):
-        """Parse a single attribute type/value pair from one or more lines."""
-        unfolded_line = self._unfold_line()
-        while unfolded_line and unfolded_line[0] == '#':
-            unfolded_line = self._unfold_line()
-        if not unfolded_line or unfolded_line in ['\n', '\r\n']:
-            return None, None
-        try:
-            colon_pos = unfolded_line.index(':')
-        except ValueError:
-            return None, None
-        attr_type = unfolded_line[0:colon_pos]
-        value_spec = unfolded_line[colon_pos:colon_pos + 2]
+            nextline = self._input_file.readline()
+            while nextline and nextline[0] == ' ':
+                line += self._strip_line_sep(nextline)[1:]
+                nextline = self._input_file.readline()
+
+            if not line.startswith('#'):
+                yield line
+            line = nextline
+
+    def _iter_blocks(self):
+        lines = []
+        for line in self._iter_unfolded_lines():
+            if line:
+                lines.append(line)
+            else:
+                yield lines
+                lines = []
+
+    def _parse_attr(self, line):
+        """Parse a single attribute type/value pair."""
+        colon_pos = line.index(':')
+        attr_type = line[0:colon_pos]
+        value_spec = line[colon_pos:colon_pos + 2]
         if value_spec == '::':
-            attr_value = base64.decodestring(unfolded_line[colon_pos + 2:])
+            attr_value = base64.decodestring(line[colon_pos + 2:])
         elif value_spec == ':<':
-            url = unfolded_line[colon_pos + 2:].strip()
+            url = line[colon_pos + 2:].strip()
             attr_value = None
             if self._process_url_schemes:
                 u = urlparse.urlparse(url)
@@ -277,57 +284,62 @@ class LDIFParser:
         elif value_spec == ':\r\n' or value_spec == '\n':
             attr_value = ''
         else:
-            attr_value = unfolded_line[colon_pos + 2:].lstrip()
+            attr_value = line[colon_pos + 2:].lstrip()
         return attr_type, attr_value
+
+    def _check_dn(self, dn, attr_value):
+        if dn is not None:
+            raise ValueError('Two lines starting with dn: '
+                'in one record.')
+        if not is_dn(attr_value):
+            raise ValueError('No valid string-representation of '
+                'distinguished name %s.' % (repr(attr_value)))
+
+    def _check_changetype(self, dn, changetype, attr_value):
+        if dn is None:
+            raise ValueError('Read changetype: before getting '
+                'valid dn: line.')
+        if changetype is not None:
+            raise ValueError('Two lines starting with changetype: '
+                'in one record.')
+        if attr_value not in valid_changetype_dict:
+            raise ValueError('changetype value %s is invalid.'
+                % (repr(attr_value)))
+
+    def _parse_entry(self, lines):
+        dn = None
+        changetype = None
+        entry = {}
+
+        for line in lines:
+            attr_type, attr_value = self._parse_attr(line)
+
+            if attr_type == 'dn':
+                self._check_dn(dn, attr_value)
+                dn = attr_value
+            elif attr_type == 'version' and dn is None:
+                pass  # version = 1
+            elif attr_type == 'changetype':
+                self._check_changetype(dn, changetype, attr_value)
+                changetype = attr_value
+            elif attr_value is not None and \
+                     attr_type.lower() not in self._ignored_attr_types:
+                if attr_type in entry:
+                    entry[attr_type].append(attr_value)
+                else:
+                    entry[attr_type] = [attr_value]
+
+        return dn, changetype, entry
 
     def parse(self):
         """Continously read and parse LDIF records."""
-        self._line = self._input_file.readline()
+        for block in self._iter_blocks():
+            dn, changetype, entry = self._parse_entry(block)
+            self.handle(dn, entry)
+            self.records_read += 1
 
-        while self._line and (not self._max_entries or
-                self.records_read < self._max_entries):
-
-            # Reset record
-            dn = None
-            changetype = None
-            entry = {}
-
-            attr_type, attr_value = self._parse_attr()
-
-            while attr_type is not None and attr_value is not None:
-                if attr_type == 'dn':
-                    if dn is not None:
-                        raise ValueError('Two lines starting with dn: '
-                            'in one record.')
-                    if not is_dn(attr_value):
-                        raise ValueError('No valid string-representation of '
-                            'distinguished name %s.' % (repr(attr_value)))
-                    dn = attr_value
-                elif attr_type == 'version' and dn is None:
-                    pass  # version = 1
-                elif attr_type == 'changetype':
-                    if dn is None:
-                        raise ValueError('Read changetype: before getting '
-                            'valid dn: line.')
-                    if changetype is not None:
-                        raise ValueError('Two lines starting with changetype: '
-                            'in one record.')
-                    if attr_value not in valid_changetype_dict:
-                        raise ValueError('changetype value %s is invalid.'
-                            % (repr(attr_value)))
-                    changetype = attr_value
-                elif attr_value is not None and \
-                         attr_type.lower() not in self._ignored_attr_types:
-                    if attr_type in entry:
-                        entry[attr_type].append(attr_value)
-                    else:
-                        entry[attr_type] = [attr_value]
-
-                attr_type, attr_value = self._parse_attr()
-
-            if entry:
-                self.handle(dn, entry)
-                self.records_read += 1
+            if self._max_entries and self.records_read >= self._max_entries:
+                break
 
 
 class LDIFRecordList(LDIFParser):
