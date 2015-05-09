@@ -191,7 +191,7 @@ class LDIFWriter:
         else:
             raise ValueError("Argument record must be dictionary or list")
         self._output_file.write(self._line_sep)
-        self.records_written = self.records_written + 1
+        self.records_written += 1
 
 
 class LDIFParser:
@@ -336,7 +336,7 @@ class LDIFParser:
 
             if entry:
                 self.handle(dn, entry)
-                self.records_read = self.records_read + 1
+                self.records_read += 1
 
 
 class LDIFRecordList(LDIFParser):
