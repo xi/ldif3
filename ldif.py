@@ -14,7 +14,8 @@ __all__ = [
     # constants
     'ldif_pattern',
     # functions
-    'AttrTypeandValueLDIF', 'CreateLDIF', 'ParseLDIF',
+    'CreateLDIF',
+    'ParseLDIF',
     # classes
     'LDIFWriter',
     'LDIFParser',
