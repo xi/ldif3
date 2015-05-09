@@ -26,31 +26,16 @@ import types
 
 attrtype_pattern = r'[\w;.-]+(;[\w_-]+)*'
 attrvalue_pattern = r'(([^,]|\\,)+|".*?")'
-attrtypeandvalue_pattern = attrtype_pattern + r'[ ]*=[ ]*' + attrvalue_pattern
-rdn_pattern = attrtypeandvalue_pattern + r'([ ]*\+[ ]*' + \
-    attrtypeandvalue_pattern + r')*[ ]*'
+attr_pattern = attrtype_pattern + r'[ ]*=[ ]*' + attrvalue_pattern
+rdn_pattern = attr_pattern + r'([ ]*\+[ ]*' + attr_pattern + r')*[ ]*'
 dn_pattern = rdn_pattern + r'([ ]*,[ ]*' + rdn_pattern + r')*[ ]*'
 dn_regex = re.compile('^%s$' % dn_pattern)
 
 ldif_pattern = ('^((dn(:|::) %(dn_pattern)s)|(%(attrtype_pattern)'
     's(:|::) .*)$)+' % vars())
 
-MOD_OP_INTEGER = {
-    'add': 0,
-    'delete': 1,
-    'replace': 2,
-}
-
-MOD_OP_STR = {
-    0: 'add',
-    1: 'delete',
-    2: 'replace',
-}
-
+MOD_OPS = ['add', 'delete', 'replace']
 CHANGE_TYPES = ['add', 'delete', 'modify', 'modrdn']
-valid_changetype_dict = {}
-for c in CHANGE_TYPES:
-    valid_changetype_dict[c] = None
 
 
 def is_dn(s):
@@ -65,9 +50,9 @@ SAFE_STRING_PATTERN = '(^(\000|\n|\r| |:|<)|[\000\n\r\200-\377]+|[ ]+$)'
 safe_string_re = re.compile(SAFE_STRING_PATTERN)
 
 
-def list_dict(l):
-    """Return a dict with the lowercased items of l as keys."""
-    return dict([(i.lower(), None) for i in (l or [])])
+def lower(l):
+    """Return a list with the lowercased items of l."""
+    return [i.lower() for i in (l or [])]
 
 
 class LDIFWriter:
@@ -90,7 +75,7 @@ class LDIFWriter:
             String used as line separator
         """
         self._output_file = output_file
-        self._base64_attrs = list_dict(base64_attrs)
+        self._base64_attrs = lower(base64_attrs)
         self._cols = cols
         self._line_sep = line_sep
         self.records_written = 0
@@ -163,7 +148,7 @@ class LDIFWriter:
                 mod_type, mod_vals = mod
             elif mod_len == 3:
                 mod_op, mod_type, mod_vals = mod
-                self._unparse_attr(MOD_OP_STR[mod_op], mod_type)
+                self._unparse_attr(MOD_OPS[mod_op], mod_type)
 
             for mod_val in mod_vals:
                 self._unparse_attr(mod_type, mod_val)
@@ -223,8 +208,8 @@ class LDIFParser:
             String used as line separator
         """
         self._input_file = input_file
-        self._process_url_schemes = list_dict(process_url_schemes)
-        self._ignored_attr_types = list_dict(ignored_attr_types)
+        self._process_url_schemes = lower(process_url_schemes)
+        self._ignored_attr_types = lower(ignored_attr_types)
         self._line_sep = line_sep
 
     def _iter_unfolded_lines(self):
@@ -286,7 +271,7 @@ class LDIFParser:
         if changetype is not None:
             raise ValueError('Two lines starting with changetype: '
                 'in one record.')
-        if attr_value not in valid_changetype_dict:
+        if attr_value not in CHANGE_TYPES:
             raise ValueError('changetype value %s is invalid.'
                 % (repr(attr_value)))
 
