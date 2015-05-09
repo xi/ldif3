@@ -12,7 +12,7 @@ __version__ = '2.4.15'
 
 __all__ = [
     # constants
-    'ldif_pattern',
+    'LDIF_PATTERN',
     # classes
     'LDIFWriter',
     'LDIFParser',
@@ -24,14 +24,14 @@ import base64
 import re
 import types
 
-attrtype_pattern = r'[\w;.-]+(;[\w_-]+)*'
-attrvalue_pattern = r'(([^,]|\\,)+|".*?")'
-attr_pattern = attrtype_pattern + r'[ ]*=[ ]*' + attrvalue_pattern
-rdn_pattern = attr_pattern + r'([ ]*\+[ ]*' + attr_pattern + r')*[ ]*'
-dn_pattern = rdn_pattern + r'([ ]*,[ ]*' + rdn_pattern + r')*[ ]*'
-dn_regex = re.compile('^%s$' % dn_pattern)
+ATTRTYPE_PATTERN = r'[\w;.-]+(;[\w_-]+)*'
+ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
+ATTR_PATTERN = ATTRTYPE_PATTERN + r'[ ]*=[ ]*' + ATTRVALUE_PATTERN
+RDN_PATTERN = ATTR_PATTERN + r'([ ]*\+[ ]*' + ATTR_PATTERN + r')*[ ]*'
+DN_PATTERN = RDN_PATTERN + r'([ ]*,[ ]*' + RDN_PATTERN + r')*[ ]*'
+DN_REGEX = re.compile('^%s$' % DN_PATTERN)
 
-ldif_pattern = ('^((dn(:|::) %(dn_pattern)s)|(%(attrtype_pattern)'
+LDIF_PATTERN = ('^((dn(:|::) %(DN_PATTERN)s)|(%(ATTRTYPE_PATTERN)'
     's(:|::) .*)$)+' % vars())
 
 MOD_OPS = ['add', 'delete', 'replace']
@@ -42,20 +42,20 @@ def is_dn(s):
     """Return True if s is a LDAP DN."""
     if s == '':
         return True
-    rm = dn_regex.match(s)
+    rm = DN_REGEX.match(s)
     return rm is not None and rm.group(0) == s
 
 
 SAFE_STRING_PATTERN = '(^(\000|\n|\r| |:|<)|[\000\n\r\200-\377]+|[ ]+$)'
-safe_string_re = re.compile(SAFE_STRING_PATTERN)
+SAFE_STRING_RE = re.compile(SAFE_STRING_PATTERN)
 
 
 def lower(l):
     """Return a list with the lowercased items of l."""
-    return [i.lower() for i in (l or [])]
+    return [i.lower() for i in l or []]
 
 
-class LDIFWriter:
+class LDIFWriter(object):
     """Write LDIF entry or change records to file object.
 
     Copy LDIF input to a file output object containing all data retrieved
@@ -103,7 +103,7 @@ class LDIFWriter:
         self._base64_attrs
         """
         return attr_type.lower() in self._base64_attrs or \
-                safe_string_re.search(attr_value) is not None
+                SAFE_STRING_RE.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
@@ -123,6 +123,7 @@ class LDIFWriter:
                 self._unparse_attr(attr_type, attr_value)
 
     def _unparse_changetype(self, mod_len):
+        """Detect and write the changetype."""
         if mod_len == 2:
             changetype = 'add'
         elif mod_len == 3:
@@ -175,7 +176,7 @@ class LDIFWriter:
         self.records_written += 1
 
 
-class LDIFParser:
+class LDIFParser(object):
     """Base class for a LDIF parser."""
 
     def _strip_line_sep(self, s):
@@ -188,12 +189,11 @@ class LDIFParser:
             return s
 
     def __init__(
-        self,
-        input_file,
-        ignored_attr_types=None,
-        process_url_schemes=None,
-        line_sep='\n'
-    ):
+            self,
+            input_file,
+            ignored_attr_types=None,
+            process_url_schemes=None,
+            line_sep='\n'):
         """
         Parameters:
         input_file
@@ -228,6 +228,7 @@ class LDIFParser:
             line = nextline
 
     def _iter_blocks(self):
+        """Iter input lines in blocks separated by blank lines."""
         lines = []
         for line in self._iter_unfolded_lines():
             if line:
@@ -257,6 +258,7 @@ class LDIFParser:
         return attr_type, attr_value
 
     def _check_dn(self, dn, attr_value):
+        """Check dn attribute for issues."""
         if dn is not None:
             raise ValueError('Two lines starting with dn: '
                 'in one record.')
@@ -265,6 +267,7 @@ class LDIFParser:
                 'distinguished name %s.' % (repr(attr_value)))
 
     def _check_changetype(self, dn, changetype, attr_value):
+        """Check changetype attribute for issues."""
         if dn is None:
             raise ValueError('Read changetype: before getting '
                 'valid dn: line.')
@@ -276,6 +279,7 @@ class LDIFParser:
                 % (repr(attr_value)))
 
     def _parse_entry(self, lines):
+        """Parse a singel record from a list of lines."""
         dn = None
         changetype = None
         entry = {}
