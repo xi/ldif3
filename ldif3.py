@@ -15,10 +15,10 @@ __all__ = [
 import base64
 import re
 
-try:
+try:  # pragma: nocover
     from urlparse import urlparse
     from urllib import urlopen
-except ImportError:
+except ImportError:  # pragma: nocover
     from urllib.parse import urlparse
     from urllib.request import urlopen
 
