@@ -16,8 +16,6 @@ __all__ = [
     # classes
     'LDIFWriter',
     'LDIFParser',
-    'LDIFRecordList',
-    'LDIFCopy',
 ]
 
 import urlparse
@@ -340,67 +338,3 @@ class LDIFParser:
 
             if self._max_entries and self.records_read >= self._max_entries:
                 break
-
-
-class LDIFRecordList(LDIFParser):
-    """Collect all records of LDIF input into a single list of 2-tuples.
-
-    It can be a memory hog!
-    """
-
-    def __init__(
-        self,
-        input_file,
-        ignored_attr_types=None,
-        max_entries=0,
-        process_url_schemes=None
-    ):
-        """See LDIFParser.__init__().
-
-        Additional Parameters:
-        all_records
-            List instance for storing parsed records
-        """
-        LDIFParser.__init__(
-            self,
-            input_file,
-            ignored_attr_types=ignored_attr_types,
-            max_entries=max_entries,
-            process_url_schemes=process_url_schemes)
-        self.all_records = []
-
-    def handle(self, dn, entry):
-        """Append single record to dictionary of all records."""
-        self.all_records.append((dn, entry))
-
-
-class LDIFCopy(LDIFParser):
-    """Copy LDIF input to LDIF output containing data retrieved via URLs."""
-
-    def __init__(
-        self,
-        input_file,
-        output_file,
-        ignored_attr_types=None,
-        max_entries=0,
-        process_url_schemes=None,
-        base64_attrs=None,
-        cols=76,
-        line_sep='\n'
-    ):
-        """See LDIFParser.__init__() and LDIFWriter.__init__()."""
-        LDIFParser.__init__(
-            self,
-            input_file,
-            ignored_attr_types=ignored_attr_types,
-            max_entries=max_entries,
-            process_url_schemes=process_url_schemes)
-        self._output_ldif = LDIFWriter(
-            output_file,
-            base64_attrs=base64_attrs,
-            cols=cols,
-            line_sep=line_sep)
-
-    def handle(self, dn, entry):
-        """Write single LDIF record to output file."""
-        self._output_ldif.unparse(dn, entry)
