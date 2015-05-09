@@ -99,20 +99,19 @@ class LDIFWriter:
 
     def _fold_line(self, line):
         """Write string line as one or more folded lines."""
-        line_len = len(line)
-        if line_len <= self._cols:
+        if len(line) <= self._cols:
             self._output_file.write(line)
             self._output_file.write(self._line_sep)
         else:
             pos = self._cols
-            self._output_file.write(line[0:min(line_len, self._cols)])
+            self._output_file.write(line[0:self._cols])
             self._output_file.write(self._line_sep)
-            while pos < line_len:
+            while pos < len(line):
                 self._output_file.write(' ')
-                end = min(line_len, pos + self._cols - 1)
+                end = min(len(line), pos + self._cols - 1)
                 self._output_file.write(line[pos:end])
                 self._output_file.write(self._line_sep)
-                pos = pos + self._cols - 1
+                pos = end
 
     def _needs_base64_encoding(self, attr_type, attr_value):
         """Return True if attr_value has to be base-64 encoded.
@@ -124,13 +123,7 @@ class LDIFWriter:
                 safe_string_re.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
-        """Write a single attribute type/value pair.
-
-        attr_type
-            attribute type
-        attr_value
-            attribute value
-        """
+        """Write a single attribute type/value pair."""
         if self._needs_base64_encoding(attr_type, attr_value):
             encoded = base64.encodestring(attr_value).replace('\n', '')
             self._fold_line(':: '.join([attr_type, encoded]))
@@ -142,9 +135,7 @@ class LDIFWriter:
         entry
             dictionary holding an entry
         """
-        attr_types = entry.keys()[:]
-        attr_types.sort()
-        for attr_type in attr_types:
+        for attr_type in sorted(entry.keys()):
             for attr_value in entry[attr_type]:
                 self._unparse_attr(attr_type, attr_value)
 
