@@ -98,7 +98,7 @@ class LDIFWriter:
         self._line_sep = line_sep
         self.records_written = 0
 
-    def _unfoldLDIFLine(self, line):
+    def _unfold_line(self, line):
         """Write string line as one or more folded lines."""
         # Check maximum line length
         line_len = len(line)
@@ -126,7 +126,7 @@ class LDIFWriter:
         return attr_type.lower() in self._base64_attrs or \
                 safe_string_re.search(attr_value) is not None
 
-    def _unparseAttrTypeandValue(self, attr_type, attr_value):
+    def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair.
 
         attr_type
@@ -137,11 +137,11 @@ class LDIFWriter:
         if self._needs_base64_encoding(attr_type, attr_value):
             # Encode with base64
             encoded = base64.encodestring(attr_value).replace('\n', '')
-            self._unfoldLDIFLine(':: '.join([attr_type, encoded]))
+            self._unfold_line(':: '.join([attr_type, encoded]))
         else:
-            self._unfoldLDIFLine(': '.join([attr_type, attr_value]))
+            self._unfold_line(': '.join([attr_type, attr_value]))
 
-    def _unparseEntryRecord(self, entry):
+    def _unparse_entry_record(self, entry):
         """
         entry
             dictionary holding an entry
@@ -150,9 +150,9 @@ class LDIFWriter:
         attr_types.sort()
         for attr_type in attr_types:
             for attr_value in entry[attr_type]:
-                self._unparseAttrTypeandValue(attr_type, attr_value)
+                self._unparse_attr(attr_type, attr_value)
 
-    def _unparseChangeRecord(self, modlist):
+    def _unparse_change_record(self, modlist):
         """
         modlist
             list of additions (2-tuple) or modifications (3-tuple)
@@ -164,18 +164,18 @@ class LDIFWriter:
             changetype = 'modify'
         else:
             raise ValueError("modlist item of wrong length")
-        self._unparseAttrTypeandValue('changetype', changetype)
+        self._unparse_attr('changetype', changetype)
         for mod in modlist:
             if mod_len == 2:
                 mod_type, mod_vals = mod
             elif mod_len == 3:
                 mod_op, mod_type, mod_vals = mod
-                self._unparseAttrTypeandValue(MOD_OP_STR[mod_op], mod_type)
+                self._unparse_attr(MOD_OP_STR[mod_op], mod_type)
             else:
                 raise ValueError("Subsequent modlist item of wrong length")
             if mod_vals:
                 for mod_val in mod_vals:
-                    self._unparseAttrTypeandValue(mod_type, mod_val)
+                    self._unparse_attr(mod_type, mod_val)
             if mod_len == 3:
                 self._output_file.write('-' + self._line_sep)
 
@@ -188,12 +188,12 @@ class LDIFWriter:
             or a list with a modify list like for LDAPObject.modify().
         """
         # Start with line containing the distinguished name
-        self._unparseAttrTypeandValue('dn', dn)
+        self._unparse_attr('dn', dn)
         # Dispatch to record type specific writers
         if isinstance(record, types.DictType):
-            self._unparseEntryRecord(record)
+            self._unparse_entry_record(record)
         elif isinstance(record, types.ListType):
-            self._unparseChangeRecord(record)
+            self._unparse_change_record(record)
         else:
             raise ValueError("Argument record must be dictionary or list")
         # Write empty line separating the records
@@ -214,7 +214,7 @@ class LDIFParser:
         Counter for records processed so far
     """
 
-    def _stripLineSep(self, s):
+    def _strip_line_sep(self, s):
         """Strip trailing line separators from s, but no other whitespaces."""
         if s[-2:] == '\r\n':
             return s[:-2]
@@ -262,22 +262,22 @@ class LDIFParser:
         This method should be implemented by applications using LDIFParser.
         """
 
-    def _unfoldLDIFLine(self):
+    def _unfold_line(self):
         """Unfold several folded lines with trailing space into one line."""
-        unfolded_lines = [self._stripLineSep(self._line)]
+        unfolded_lines = [self._strip_line_sep(self._line)]
         self._line = self._input_file.readline()
         while self._line and self._line[0] == ' ':
-            unfolded_lines.append(self._stripLineSep(self._line[1:]))
+            unfolded_lines.append(self._strip_line_sep(self._line[1:]))
             self._line = self._input_file.readline()
         return ''.join(unfolded_lines)
 
-    def _parseAttrTypeandValue(self):
+    def _parse_attr(self):
         """Parse a single attribute type/value pair from one or more lines."""
         # Reading new attribute line
-        unfolded_line = self._unfoldLDIFLine()
+        unfolded_line = self._unfold_line()
         # Ignore comments which can also be folded
         while unfolded_line and unfolded_line[0] == '#':
-            unfolded_line = self._unfoldLDIFLine()
+            unfolded_line = self._unfold_line()
         if not unfolded_line or unfolded_line in ['\n', '\r\n']:
             return None, None
         try:
@@ -317,7 +317,7 @@ class LDIFParser:
             changetype = None
             entry = {}
 
-            attr_type, attr_value = self._parseAttrTypeandValue()
+            attr_type, attr_value = self._parse_attr()
 
             while attr_type is not None and attr_value is not None:
                 if attr_type == 'dn':
@@ -352,7 +352,7 @@ class LDIFParser:
                         entry[attr_type] = [attr_value]
 
                 # Read the next line within an entry
-                attr_type, attr_value = self._parseAttrTypeandValue()
+                attr_type, attr_value = self._parse_attr()
 
             if entry:
                 # append entry to result list
