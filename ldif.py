@@ -1,5 +1,4 @@
-"""
-ldif - generate and parse LDIF data (see RFC 2849)
+"""ldif - generate and parse LDIF data (see RFC 2849).
 
 See http://www.python-ldap.org/ for details.
 
@@ -54,9 +53,7 @@ for c in CHANGE_TYPES:
 
 
 def is_dn(s):
-  """
-  returns 1 if s is a LDAP DN
-  """
+  """Return 1 if s is a LDAP DN."""
   if s=='':
     return 1
   rm = dn_regex.match(s)
@@ -67,17 +64,15 @@ SAFE_STRING_PATTERN = '(^(\000|\n|\r| |:|<)|[\000\n\r\200-\377]+|[ ]+$)'
 safe_string_re = re.compile(SAFE_STRING_PATTERN)
 
 def list_dict(l):
-  """
-  return a dictionary with all items of l being the keys of the dictionary
-  """
+  """Return a dict with the items of l as keys."""
   return dict([(i,None) for i in l])
 
 
 class LDIFWriter:
-  """
-  Write LDIF entry or change records to file object
+  """Write LDIF entry or change records to file object.
+
   Copy LDIF input to a file output object containing all data retrieved
-  via URLs
+  via URLs.
   """
 
   def __init__(self,output_file,base64_attrs=None,cols=76,line_sep='\n'):
@@ -99,9 +94,7 @@ class LDIFWriter:
     self.records_written = 0
 
   def _unfoldLDIFLine(self,line):
-    """
-    Write string line as one or more folded lines
-    """
+    """Write string line as one or more folded lines."""
     # Check maximum line length
     line_len = len(line)
     if line_len<=self._cols:
@@ -120,16 +113,16 @@ class LDIFWriter:
     return # _unfoldLDIFLine()
 
   def _needs_base64_encoding(self,attr_type,attr_value):
-    """
-    returns 1 if attr_value has to be base-64 encoded because
-    of special chars or because attr_type is in self._base64_attrs
+    """Return 1 if attr_value has to be base-64 encoded.
+
+    This is the case because of special chars or because attr_type is in
+    self._base64_attrs
     """
     return self._base64_attrs.has_key(attr_type.lower()) or \
            not safe_string_re.search(attr_value) is None
 
   def _unparseAttrTypeandValue(self,attr_type,attr_value):
-    """
-    Write a single attribute type/value pair
+    """Write a single attribute type/value pair.
 
     attr_type
           attribute type
@@ -206,8 +199,8 @@ class LDIFWriter:
 
 
 def CreateLDIF(dn,record,base64_attrs=None,cols=76):
-  """
-  Create LDIF single formatted record including trailing empty line.
+  """Create LDIF single formatted record including trailing empty line.
+
   This is a compability function. Use is deprecated!
 
   dn
@@ -230,9 +223,10 @@ def CreateLDIF(dn,record,base64_attrs=None,cols=76):
 
 
 class LDIFParser:
-  """
-  Base class for a LDIF parser. Applications should sub-class this
-  class and override method handle() to implement something meaningful.
+  """Base class for a LDIF parser.
+
+  Applications should sub-class this class and override method handle() to
+  implement something meaningful.
 
   Public class attributes:
 
@@ -241,9 +235,7 @@ class LDIFParser:
   """
 
   def _stripLineSep(self,s):
-    """
-    Strip trailing line separators from s, but no other whitespaces
-    """
+    """Strip trailing line separators from s, but no other whitespaces."""
     if s[-2:]=='\r\n':
       return s[:-2]
     elif s[-1:]=='\n':
@@ -283,15 +275,13 @@ class LDIFParser:
     self.records_read = 0
 
   def handle(self,dn,entry):
-    """
-    Process a single content LDIF record. This method should be
-    implemented by applications using LDIFParser.
+    """Proces a single content LDIF record.
+
+    This method should be implemented by applications using LDIFParser.
     """
 
   def _unfoldLDIFLine(self):
-    """
-    Unfold several folded lines with trailing space into one line
-    """
+    """Unfold several folded lines with trailing space into one line."""
     unfolded_lines = [ self._stripLineSep(self._line) ]
     self._line = self._input_file.readline()
     while self._line and self._line[0]==' ':
@@ -300,10 +290,7 @@ class LDIFParser:
     return ''.join(unfolded_lines)
 
   def _parseAttrTypeandValue(self):
-    """
-    Parse a single attribute type and value pair from one or
-    more lines of LDIF data
-    """
+    """Parse a single attribute type and value pair from one or more lines."""
     # Reading new attribute line
     unfolded_line = self._unfoldLDIFLine()
     # Ignore comments which can also be folded
@@ -337,9 +324,7 @@ class LDIFParser:
     return attr_type,attr_value
 
   def parse(self):
-    """
-    Continously read and parse LDIF records
-    """
+    """Continously read and parse LDIF records."""
     self._line = self._input_file.readline()
 
     while self._line and \
@@ -389,9 +374,9 @@ class LDIFParser:
 
 
 class LDIFRecordList(LDIFParser):
-  """
-  Collect all records of LDIF input into a single list.
-  of 2-tuples (dn,entry). It can be a memory hog!
+  """Collect all records of LDIF input into a single list of 2-tuples.
+
+  It can be a memory hog!
   """
 
   def __init__(
@@ -399,8 +384,7 @@ class LDIFRecordList(LDIFParser):
     input_file,
     ignored_attr_types=None,max_entries=0,process_url_schemes=None
   ):
-    """
-    See LDIFParser.__init__()
+    """See LDIFParser.__init__().
 
     Additional Parameters:
     all_records
@@ -410,17 +394,12 @@ class LDIFRecordList(LDIFParser):
     self.all_records = []
 
   def handle(self,dn,entry):
-    """
-    Append single record to dictionary of all records.
-    """
+    """Append single record to dictionary of all records."""
     self.all_records.append((dn,entry))
 
 
 class LDIFCopy(LDIFParser):
-  """
-  Copy LDIF input to LDIF output containing all data retrieved
-  via URLs
-  """
+  """Copy LDIF input to LDIF output containing all data retrieved via URLs."""
 
   def __init__(
     self,
@@ -428,9 +407,7 @@ class LDIFCopy(LDIFParser):
     ignored_attr_types=None,max_entries=0,process_url_schemes=None,
     base64_attrs=None,cols=76,line_sep='\n'
   ):
-    """
-    See LDIFParser.__init__() and LDIFWriter.__init__()
-    """
+    """See LDIFParser.__init__() and LDIFWriter.__init__()."""
     LDIFParser.__init__(self,input_file,ignored_attr_types,max_entries,process_url_schemes)
     self._output_ldif = LDIFWriter(output_file,base64_attrs,cols,line_sep)
 
@@ -442,8 +419,8 @@ class LDIFCopy(LDIFParser):
 
 
 def ParseLDIF(f,ignore_attrs=None,maxentries=0):
-  """
-  Parse LDIF records read from file.
+  """Parse LDIF records read from file.
+
   This is a compability function. Use is deprecated!
   """
   ldif_parser = LDIFRecordList(
