@@ -68,8 +68,8 @@ safe_string_re = re.compile(SAFE_STRING_PATTERN)
 
 
 def list_dict(l):
-    """Return a dict with the items of l as keys."""
-    return dict([(i, None) for i in l])
+    """Return a dict with the lowercased items of l as keys."""
+    return dict([(i.lower(), None) for i in (l or [])])
 
 
 class LDIFWriter:
@@ -92,8 +92,7 @@ class LDIFWriter:
             String used as line separator
         """
         self._output_file = output_file
-        self._base64_attrs = list_dict(
-            [a.lower() for a in (base64_attrs or [])])
+        self._base64_attrs = list_dict(base64_attrs)
         self._cols = cols
         self._line_sep = line_sep
         self.records_written = 0
@@ -249,10 +248,8 @@ class LDIFParser:
         """
         self._input_file = input_file
         self._max_entries = max_entries
-        self._process_url_schemes = list_dict(
-            [s.lower() for s in (process_url_schemes or [])])
-        self._ignored_attr_types = list_dict(
-            [a.lower() for a in (ignored_attr_types or [])])
+        self._process_url_schemes = list_dict(process_url_schemes)
+        self._ignored_attr_types = list_dict(ignored_attr_types)
         self._line_sep = line_sep
         self.records_read = 0
 
