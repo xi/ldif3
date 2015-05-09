@@ -112,7 +112,6 @@ class LDIFWriter:
                 self._output_file.write(line[pos:min(line_len, pos + self._cols - 1)])
                 self._output_file.write(self._line_sep)
                 pos = pos + self._cols - 1
-        return  # _unfoldLDIFLine()
 
     def _needs_base64_encoding(self, attr_type, attr_value):
         """Return 1 if attr_value has to be base-64 encoded.
@@ -136,7 +135,6 @@ class LDIFWriter:
             self._unfoldLDIFLine(':: '.join([attr_type, base64.encodestring(attr_value).replace('\n', '')]))
         else:
             self._unfoldLDIFLine(': '.join([attr_type, attr_value]))
-        return  # _unparseAttrTypeandValue()
 
     def _unparseEntryRecord(self, entry):
         """
@@ -197,7 +195,6 @@ class LDIFWriter:
         self._output_file.write(self._line_sep)
         # Count records written
         self.records_written = self.records_written + 1
-        return  # unparse()
 
 
 class LDIFParser:
@@ -351,8 +348,6 @@ class LDIFParser:
                 # append entry to result list
                 self.handle(dn, entry)
                 self.records_read = self.records_read + 1
-
-        return  # parse()
 
 
 class LDIFRecordList(LDIFParser):
