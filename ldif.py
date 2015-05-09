@@ -396,7 +396,5 @@ class LDIFCopy(LDIFParser):
         self._output_ldif = LDIFWriter(output_file, base64_attrs, cols, line_sep)
 
     def handle(self, dn, entry):
-        """
-        Write single LDIF record to output file.
-        """
+        """Write single LDIF record to output file."""
         self._output_ldif.unparse(dn, entry)
