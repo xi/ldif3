@@ -29,11 +29,13 @@ import types
 attrtype_pattern = r'[\w;.-]+(;[\w_-]+)*'
 attrvalue_pattern = r'(([^,]|\\,)+|".*?")'
 attrtypeandvalue_pattern = attrtype_pattern + r'[ ]*=[ ]*' + attrvalue_pattern
-rdn_pattern = attrtypeandvalue_pattern + r'([ ]*\+[ ]*' + attrtypeandvalue_pattern + r')*[ ]*'
+rdn_pattern = attrtypeandvalue_pattern + r'([ ]*\+[ ]*' + \
+    attrtypeandvalue_pattern + r')*[ ]*'
 dn_pattern = rdn_pattern + r'([ ]*,[ ]*' + rdn_pattern + r')*[ ]*'
 dn_regex = re.compile('^%s$' % dn_pattern)
 
-ldif_pattern = '^((dn(:|::) %(dn_pattern)s)|(%(attrtype_pattern)s(:|::) .*)$)+' % vars()
+ldif_pattern = ('^((dn(:|::) %(dn_pattern)s)|(%(attrtype_pattern)'
+    's(:|::) .*)$)+' % vars())
 
 MOD_OP_INTEGER = {
     'add': 0,
@@ -90,7 +92,8 @@ class LDIFWriter:
             String used as line separator
         """
         self._output_file = output_file
-        self._base64_attrs = list_dict([a.lower() for a in (base64_attrs or [])])
+        self._base64_attrs = list_dict(
+            [a.lower() for a in (base64_attrs or [])])
         self._cols = cols
         self._line_sep = line_sep
         self.records_written = 0
@@ -109,7 +112,8 @@ class LDIFWriter:
             self._output_file.write(self._line_sep)
             while pos < line_len:
                 self._output_file.write(' ')
-                self._output_file.write(line[pos:min(line_len, pos + self._cols - 1)])
+                end = min(line_len, pos + self._cols - 1)
+                self._output_file.write(line[pos:end])
                 self._output_file.write(self._line_sep)
                 pos = pos + self._cols - 1
 
@@ -132,7 +136,8 @@ class LDIFWriter:
         """
         if self._needs_base64_encoding(attr_type, attr_value):
             # Encode with base64
-            self._unfoldLDIFLine(':: '.join([attr_type, base64.encodestring(attr_value).replace('\n', '')]))
+            encoded = base64.encodestring(attr_value).replace('\n', '')
+            self._unfoldLDIFLine(':: '.join([attr_type, encoded]))
         else:
             self._unfoldLDIFLine(': '.join([attr_type, attr_value]))
 
@@ -244,8 +249,10 @@ class LDIFParser:
         """
         self._input_file = input_file
         self._max_entries = max_entries
-        self._process_url_schemes = list_dict([s.lower() for s in (process_url_schemes or [])])
-        self._ignored_attr_types = list_dict([a.lower() for a in (ignored_attr_types or [])])
+        self._process_url_schemes = list_dict(
+            [s.lower() for s in (process_url_schemes or [])])
+        self._ignored_attr_types = list_dict(
+            [a.lower() for a in (ignored_attr_types or [])])
         self._line_sep = line_sep
         self.records_read = 0
 
@@ -265,13 +272,13 @@ class LDIFParser:
         return ''.join(unfolded_lines)
 
     def _parseAttrTypeandValue(self):
-        """Parse a single attribute type and value pair from one or more lines."""
+        """Parse a single attribute type/value pair from one or more lines."""
         # Reading new attribute line
         unfolded_line = self._unfoldLDIFLine()
         # Ignore comments which can also be folded
         while unfolded_line and unfolded_line[0] == '#':
             unfolded_line = self._unfoldLDIFLine()
-        if not unfolded_line or unfolded_line == '\n' or unfolded_line == '\r\n':
+        if not unfolded_line or unfolded_line in ['\n', '\r\n']:
             return None, None
         try:
             colon_pos = unfolded_line.index(':')
@@ -302,8 +309,8 @@ class LDIFParser:
         """Continously read and parse LDIF records."""
         self._line = self._input_file.readline()
 
-        while self._line and \
-                (not self._max_entries or self.records_read < self._max_entries):
+        while self._line and (not self._max_entries or
+                self.records_read < self._max_entries):
 
             # Reset record
             version = None
@@ -318,20 +325,25 @@ class LDIFParser:
                 if attr_type == 'dn':
                     # attr type and value pair was DN of LDIF record
                     if dn is not None:
-                        raise ValueError('Two lines starting with dn: in one record.')
+                        raise ValueError('Two lines starting with dn: '
+                            'in one record.')
                     if not is_dn(attr_value):
-                        raise ValueError('No valid string-representation of distinguished name %s.' % (repr(attr_value)))
+                        raise ValueError('No valid string-representation of '
+                            'distinguished name %s.' % (repr(attr_value)))
                     dn = attr_value
                 elif attr_type == 'version' and dn is None:
                     version = 1
                 elif attr_type == 'changetype':
                     # attr type and value pair was DN of LDIF record
                     if dn is None:
-                        raise ValueError('Read changetype: before getting valid dn: line.')
+                        raise ValueError('Read changetype: before getting '
+                            'valid dn: line.')
                     if changetype is not None:
-                        raise ValueError('Two lines starting with changetype: in one record.')
+                        raise ValueError('Two lines starting with changetype: '
+                            'in one record.')
                     if attr_value not in valid_changetype_dict:
-                        raise ValueError('changetype value %s is invalid.' % (repr(attr_value)))
+                        raise ValueError('changetype value %s is invalid.'
+                            % (repr(attr_value)))
                     changetype = attr_value
                 elif attr_value is not None and \
                          attr_type.lower() not in self._ignored_attr_types:
@@ -369,7 +381,12 @@ class LDIFRecordList(LDIFParser):
         all_records
             List instance for storing parsed records
         """
-        LDIFParser.__init__(self, input_file, ignored_attr_types, max_entries, process_url_schemes)
+        LDIFParser.__init__(
+            self,
+            input_file,
+            ignored_attr_types=ignored_attr_types,
+            max_entries=max_entries,
+            process_url_schemes=process_url_schemes)
         self.all_records = []
 
     def handle(self, dn, entry):
@@ -378,7 +395,7 @@ class LDIFRecordList(LDIFParser):
 
 
 class LDIFCopy(LDIFParser):
-    """Copy LDIF input to LDIF output containing all data retrieved via URLs."""
+    """Copy LDIF input to LDIF output containing data retrieved via URLs."""
 
     def __init__(
         self,
@@ -392,8 +409,17 @@ class LDIFCopy(LDIFParser):
         line_sep='\n'
     ):
         """See LDIFParser.__init__() and LDIFWriter.__init__()."""
-        LDIFParser.__init__(self, input_file, ignored_attr_types, max_entries, process_url_schemes)
-        self._output_ldif = LDIFWriter(output_file, base64_attrs, cols, line_sep)
+        LDIFParser.__init__(
+            self,
+            input_file,
+            ignored_attr_types=ignored_attr_types,
+            max_entries=max_entries,
+            process_url_schemes=process_url_schemes)
+        self._output_ldif = LDIFWriter(
+            output_file,
+            base64_attrs=base64_attrs,
+            cols=cols,
+            line_sep=line_sep)
 
     def handle(self, dn, entry):
         """Write single LDIF record to output file."""
