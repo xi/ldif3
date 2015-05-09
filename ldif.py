@@ -184,16 +184,7 @@ class LDIFWriter:
 
 
 class LDIFParser:
-    """Base class for a LDIF parser.
-
-    Applications should sub-class this class and override method handle() to
-    implement something meaningful.
-
-    Public class attributes:
-
-    records_read
-        Counter for records processed so far
-    """
+    """Base class for a LDIF parser."""
 
     def _strip_line_sep(self, s):
         """Strip trailing line separators from s, but no other whitespaces."""
@@ -208,7 +199,6 @@ class LDIFParser:
         self,
         input_file,
         ignored_attr_types=None,
-        max_entries=0,
         process_url_schemes=None,
         line_sep='\n'
     ):
@@ -218,9 +208,6 @@ class LDIFParser:
             File-object to read the LDIF input from
         ignored_attr_types
             Attributes with these attribute type names will be ignored.
-        max_entries
-            If non-zero specifies the maximum number of entries to be
-            read from f.
         process_url_schemes
             List containing strings with URLs schemes to process with urllib.
             An empty list turns off all URL processing and the attribute
@@ -229,17 +216,9 @@ class LDIFParser:
             String used as line separator
         """
         self._input_file = input_file
-        self._max_entries = max_entries
         self._process_url_schemes = list_dict(process_url_schemes)
         self._ignored_attr_types = list_dict(ignored_attr_types)
         self._line_sep = line_sep
-        self.records_read = 0
-
-    def handle(self, dn, entry):
-        """Proces a single content LDIF record.
-
-        This method should be implemented by applications using LDIFParser.
-        """
 
     def _iter_unfolded_lines(self):
         """Iter input unfoled lines. Skip comments."""
@@ -330,11 +309,6 @@ class LDIFParser:
         return dn, changetype, entry
 
     def parse(self):
-        """Continously read and parse LDIF records."""
+        """Iterate LDIF records (dn, changetype, entry)."""
         for block in self._iter_blocks():
-            dn, changetype, entry = self._parse_entry(block)
-            self.handle(dn, entry)
-            self.records_read += 1
-
-            if self._max_entries and self.records_read >= self._max_entries:
-                break
+            yield self._parse_entry(block)
