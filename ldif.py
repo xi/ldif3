@@ -13,9 +13,6 @@ __version__ = '2.4.15'
 __all__ = [
     # constants
     'ldif_pattern',
-    # functions
-    'CreateLDIF',
-    'ParseLDIF',
     # classes
     'LDIFWriter',
     'LDIFParser',
@@ -28,11 +25,6 @@ import urllib
 import base64
 import re
 import types
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 attrtype_pattern = r'[\w;.-]+(;[\w_-]+)*'
 attrvalue_pattern = r'(([^,]|\\,)+|".*?")'
@@ -206,30 +198,6 @@ class LDIFWriter:
         # Count records written
         self.records_written = self.records_written + 1
         return  # unparse()
-
-
-def CreateLDIF(dn, record, base64_attrs=None, cols=76):
-    """Create LDIF single formatted record including trailing empty line.
-
-    This is a compability function. Use is deprecated!
-
-    dn
-        string-representation of distinguished name
-    record
-        Either a dictionary holding the LDAP entry {attrtype:record}
-        or a list with a modify list like for LDAPObject.modify().
-    base64_attrs
-        list of attribute types to be base64-encoded in any case
-    cols
-        Specifies how many columns a line may have before it's
-        folded into many lines.
-    """
-    f = StringIO()
-    ldif_writer = LDIFWriter(f, base64_attrs, cols, '\n')
-    ldif_writer.unparse(dn, record)
-    s = f.getvalue()
-    f.close()
-    return s
 
 
 class LDIFParser:
@@ -437,13 +405,3 @@ class LDIFCopy(LDIFParser):
         Write single LDIF record to output file.
         """
         self._output_ldif.unparse(dn, entry)
-
-
-def ParseLDIF(f, ignore_attrs=None, maxentries=0):
-    """Parse LDIF records read from file.
-
-    This is a compability function. Use is deprecated!
-    """
-    ldif_parser = LDIFRecordList(f, ignored_attr_types=ignore_attrs, max_entries=maxentries, process_url_schemes=0)
-    ldif_parser.parse()
-    return ldif_parser.all_records
