@@ -277,7 +277,7 @@ class LDIFParser(object):
             raise ValueError('changetype value %s is invalid.'
                 % (repr(attr_value)))
 
-    def _parse_entry(self, lines):
+    def _parse_record(self, lines):
         """Parse a singel record from a list of lines."""
         dn = None
         changetype = None
@@ -306,4 +306,4 @@ class LDIFParser(object):
     def parse(self):
         """Iterate LDIF records (dn, changetype, entry)."""
         for block in self._iter_blocks():
-            yield self._parse_entry(block)
+            yield self._parse_record(block)
