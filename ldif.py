@@ -1,12 +1,6 @@
-"""ldif - generate and parse LDIF data (see RFC 2849).
+"""ldif - generate and parse LDIF data (see RFC 2849)."""
 
-See http://www.python-ldap.org/ for details.
-
-$Id: ldif.py,v 1.74 2014/03/12 23:11:26 stroeder Exp $
-
-Python compability note:
-Tested with Python 2.0+, but should work with Python 1.5.2+.
-"""
+from __future__ import unicode_literals
 
 __version__ = '2.4.15'
 
@@ -18,11 +12,16 @@ __all__ = [
     'LDIFParser',
 ]
 
-import urlparse
-import urllib
 import base64
 import re
-import types
+
+try:
+    from urlparse import urlparse
+    from urllib import urlopen
+except ImportError:
+    from urllib.parse import urlparse
+    from urllib.request import urlopen
+
 
 ATTRTYPE_PATTERN = r'[\w;.-]+(;[\w_-]+)*'
 ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
@@ -166,9 +165,9 @@ class LDIFWriter(object):
             or a list with a modify list like for LDAPObject.modify().
         """
         self._unparse_attr('dn', dn)
-        if isinstance(record, types.DictType):
+        if isinstance(record, dict):
             self._unparse_entry_record(record)
-        elif isinstance(record, types.ListType):
+        elif isinstance(record, list):
             self._unparse_change_record(record)
         else:
             raise ValueError("Argument record must be dictionary or list")
@@ -248,9 +247,9 @@ class LDIFParser(object):
             url = line[colon_pos + 2:].strip()
             attr_value = None
             if self._process_url_schemes:
-                u = urlparse.urlparse(url)
+                u = urlparse(url)
                 if u[0] in self._process_url_schemes:
-                    attr_value = urllib.urlopen(url).read()
+                    attr_value = urlopen(url).read()
         elif value_spec == ':\r\n' or value_spec == '\n':
             attr_value = ''
         else:
