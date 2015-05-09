@@ -56,9 +56,9 @@ for c in CHANGE_TYPES:
 
 
 def is_dn(s):
-    """Return 1 if s is a LDAP DN."""
+    """Return True if s is a LDAP DN."""
     if s == '':
-        return 1
+        return True
     rm = dn_regex.match(s)
     return rm is not None and rm.group(0) == s
 
@@ -118,7 +118,7 @@ class LDIFWriter:
                 pos = pos + self._cols - 1
 
     def _needs_base64_encoding(self, attr_type, attr_value):
-        """Return 1 if attr_value has to be base-64 encoded.
+        """Return True if attr_value has to be base-64 encoded.
 
         This is the case because of special chars or because attr_type is in
         self._base64_attrs
