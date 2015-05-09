@@ -99,13 +99,11 @@ class LDIFWriter:
 
     def _unfold_line(self, line):
         """Write string line as one or more folded lines."""
-        # Check maximum line length
         line_len = len(line)
         if line_len <= self._cols:
             self._output_file.write(line)
             self._output_file.write(self._line_sep)
         else:
-            # Fold line
             pos = self._cols
             self._output_file.write(line[0:min(line_len, self._cols)])
             self._output_file.write(self._line_sep)
@@ -134,7 +132,6 @@ class LDIFWriter:
             attribute value
         """
         if self._needs_base64_encoding(attr_type, attr_value):
-            # Encode with base64
             encoded = base64.encodestring(attr_value).replace('\n', '')
             self._unfold_line(':: '.join([attr_type, encoded]))
         else:
@@ -186,18 +183,14 @@ class LDIFWriter:
             Either a dictionary holding the LDAP entry {attrtype:record}
             or a list with a modify list like for LDAPObject.modify().
         """
-        # Start with line containing the distinguished name
         self._unparse_attr('dn', dn)
-        # Dispatch to record type specific writers
         if isinstance(record, types.DictType):
             self._unparse_entry_record(record)
         elif isinstance(record, types.ListType):
             self._unparse_change_record(record)
         else:
             raise ValueError("Argument record must be dictionary or list")
-        # Write empty line separating the records
         self._output_file.write(self._line_sep)
-        # Count records written
         self.records_written = self.records_written + 1
 
 
@@ -270,9 +263,7 @@ class LDIFParser:
 
     def _parse_attr(self):
         """Parse a single attribute type/value pair from one or more lines."""
-        # Reading new attribute line
         unfolded_line = self._unfold_line()
-        # Ignore comments which can also be folded
         while unfolded_line and unfolded_line[0] == '#':
             unfolded_line = self._unfold_line()
         if not unfolded_line or unfolded_line in ['\n', '\r\n']:
@@ -280,16 +271,12 @@ class LDIFParser:
         try:
             colon_pos = unfolded_line.index(':')
         except ValueError:
-            # Treat malformed lines without colon as non-existent
             return None, None
         attr_type = unfolded_line[0:colon_pos]
-        # if needed attribute value is BASE64 decoded
         value_spec = unfolded_line[colon_pos:colon_pos + 2]
         if value_spec == '::':
-            # attribute value needs base64-decoding
             attr_value = base64.decodestring(unfolded_line[colon_pos + 2:])
         elif value_spec == ':<':
-            # fetch attribute value from URL
             url = unfolded_line[colon_pos + 2:].strip()
             attr_value = None
             if self._process_url_schemes:
@@ -318,7 +305,6 @@ class LDIFParser:
 
             while attr_type is not None and attr_value is not None:
                 if attr_type == 'dn':
-                    # attr type and value pair was DN of LDIF record
                     if dn is not None:
                         raise ValueError('Two lines starting with dn: '
                             'in one record.')
@@ -329,7 +315,6 @@ class LDIFParser:
                 elif attr_type == 'version' and dn is None:
                     pass  # version = 1
                 elif attr_type == 'changetype':
-                    # attr type and value pair was DN of LDIF record
                     if dn is None:
                         raise ValueError('Read changetype: before getting '
                             'valid dn: line.')
@@ -342,17 +327,14 @@ class LDIFParser:
                     changetype = attr_value
                 elif attr_value is not None and \
                          attr_type.lower() not in self._ignored_attr_types:
-                    # Add the attribute to the entry if not ignored attribute
                     if attr_type in entry:
                         entry[attr_type].append(attr_value)
                     else:
                         entry[attr_type] = [attr_value]
 
-                # Read the next line within an entry
                 attr_type, attr_value = self._parse_attr()
 
             if entry:
-                # append entry to result list
                 self.handle(dn, entry)
                 self.records_read = self.records_read + 1
 
