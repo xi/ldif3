@@ -1,8 +1,8 @@
 ldif3 - generate and parse LDIF data (see `RFC 2849`_).
 
-This is a fork of the ``ldif`` module from `python-ldap`_. See the first
-entry in CHANGES.rst for a list of differences from the original
-version.
+This is a fork of the ``ldif`` module from `python-ldap`_ with python3/unicode
+support. See the first entry in CHANGES.rst for a more complete list of
+differences.
 
 Usage
 -----
