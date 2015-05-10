@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
+import os
+
 from setuptools import setup
 
+curdir = os.path.dirname(os.path.abspath(__file__))
 
-with open('ldif3.py') as fh:
+
+with open(os.path.join(curdir, 'ldif3.py')) as fh:
     for line in fh:
         if line.startswith('"""'):
             name, description = line.rstrip().strip('"').split(' - ')
@@ -15,7 +19,7 @@ setup(
     name=name,
     version=version,
     description=description,
-    long_description=open('README.rst').read(),
+    long_description=open(os.path.join(curdir, 'README.rst')).read(),
     url='https://github.com/xi/ldif3',
     author='Tobias Bengfort',
     author_email='tobias.bengfort@posteo.de',
