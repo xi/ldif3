@@ -45,8 +45,8 @@ def is_dn(s):
     return rm is not None and rm.group(0) == s
 
 
-SAFE_STRING_PATTERN = '(^(\000|\n|\r| |:|<)|[\000\n\r\200-\377]+|[ ]+$)'
-SAFE_STRING_RE = re.compile(SAFE_STRING_PATTERN)
+UNSAFE_STRING_PATTERN = '(^(\000|\n|\r| |:|<)|[\000\n\r\200-\377]+|[ ]+$)'
+UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
 
 
 def lower(l):
@@ -103,7 +103,7 @@ class LDIFWriter(object):
         self._base64_attrs
         """
         return attr_type.lower() in self._base64_attrs or \
-                SAFE_STRING_RE.search(attr_value) is not None
+                UNSAFE_STRING_RE.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
