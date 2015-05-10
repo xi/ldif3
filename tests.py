@@ -97,6 +97,36 @@ URL = b'https://tools.ietf.org/rfc/rfc2849.txt'
 URL_CONTENT = 'The LDAP Data Interchange Format (LDIF)'
 
 
+class TestUnsafeString(unittest.TestCase):
+    unsafe_chars = ['\0', '\n', '\r']
+    unsafe_chars_init = unsafe_chars + [' ', ':', '<']
+
+    def _test_all(self, unsafes, fn):
+        for i in range(128):  # TODO: test range(255)
+            try:
+                match = ldif3.UNSAFE_STRING_RE.search(fn(i))
+                if i <= 127 and chr(i) not in unsafes:
+                    self.assertIsNone(match)
+                else:
+                    self.assertIsNotNone(match)
+            except AssertionError:
+                print(i)
+                raise
+
+    def test_unsafe_chars(self):
+        self._test_all(self.unsafe_chars, lambda i: 'a%s' % chr(i))
+
+    def test_unsafe_chars_init(self):
+        self._test_all(self.unsafe_chars_init, lambda i: '%s' % chr(i))
+
+    def test_example(self):
+        s = 'cn=Alice, Alison,mail=Alice.Alison@example.com'
+        self.assertIsNone(ldif3.UNSAFE_STRING_RE.search(s))
+
+    def test_trailing_newline(self):
+        self.assertIsNotNone(ldif3.UNSAFE_STRING_RE.search('asd\n'))
+
+
 class TestLower(unittest.TestCase):
     def test_happy(self):
         self.assertEqual(ldif3.lower(['ASD', 'HuHu']), ['asd', 'huhu'])
