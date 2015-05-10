@@ -222,11 +222,11 @@ class TestLDIFWriter(unittest.TestCase):
         result = self.w._needs_base64_encoding('attr_type', 'attr_value')
         self.assertTrue(result)
 
-    def test_needs_base64_encoding_not_save(self):
+    def test_needs_base64_encoding_not_safe(self):
         result = self.w._needs_base64_encoding('attr_type', '\r')
         self.assertTrue(result)
 
-    def test_needs_base64_encoding_save(self):
+    def test_needs_base64_encoding_safe(self):
         result = self.w._needs_base64_encoding('attr_type', 'abcABC123_+')
         self.assertFalse(result)
 
