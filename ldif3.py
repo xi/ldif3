@@ -57,23 +57,23 @@ def lower(l):
 class LDIFWriter(object):
     """Write LDIF entry or change records to file object.
 
-    Copy LDIF input to a file output object containing all data retrieved
-    via URLs.
+    :type output_file: file-like object in binary mode
+    :param output_file: File for output
+
+    :type base64_attrs: List[string]
+    :param base64_attrs: List of attribute types to be base64-encoded in any
+        case
+
+    :type cols: int
+    :param cols: Specifies how many columns a line may have before it is
+        folded into many lines
+
+    :type line_sep: bytearray
+    :param line_sep: line separator
     """
 
     def __init__(
-            self, output_file, base64_attrs=None, cols=76, line_sep=b'\n'):
-        """
-        output_file
-            file object for output
-        base64_attrs
-            list of attribute types to be base64-encoded in any case
-        cols
-            Specifies how many columns a line may have before it's
-            folded into many lines.
-        line_sep
-            String used as line separator
-        """
+            self, output_file, base64_attrs=[], cols=76, line_sep=b'\n'):
         self._output_file = output_file
         self._base64_attrs = lower(base64_attrs)
         self._cols = cols
@@ -118,8 +118,8 @@ class LDIFWriter(object):
 
     def _unparse_entry_record(self, entry):
         """
-        entry
-            dictionary holding an entry
+        :type entry: Dict[string, List[string]]
+        :param entry: Dictionary holding an entry
         """
         for attr_type in sorted(entry.keys()):
             for attr_value in entry[attr_type]:
@@ -138,8 +138,8 @@ class LDIFWriter(object):
 
     def _unparse_change_record(self, modlist):
         """
-        modlist
-            list of additions (2-tuple) or modifications (3-tuple)
+        :type modlist: List[Tuple]
+        :param modlist: List of additions (2-tuple) or modifications (3-tuple)
         """
         mod_len = len(modlist[0])
         self._unparse_changetype(mod_len)
@@ -161,12 +161,14 @@ class LDIFWriter(object):
                 self._output_file.write(b'-' + self._line_sep)
 
     def unparse(self, dn, record):
-        """
-        dn
-            string-representation of distinguished name
-        record
-            Either a dictionary holding the LDAP entry {attrtype:record}
-            or a list with a modify list like for LDAPObject.modify().
+        """Write an entry or change record to the output file.
+
+        :type dn: string
+        :param dn: distinguished name
+
+        :type record: Union[Dict[string, List[string]], List[Tuple]]
+        :param record: Either a dictionary holding  an entry or a list of
+            additions (2-tuple) or modifications (3-tuple).
         """
         self._unparse_attr('dn', dn)
         if isinstance(record, dict):
@@ -180,7 +182,22 @@ class LDIFWriter(object):
 
 
 class LDIFParser(object):
-    """Base class for a LDIF parser."""
+    """Read LDIF entry or change records from file object.
+
+    :type input_file: file-like object in binary mode
+    :param input_file: file to read the LDIF input from
+
+    :type ignored_attr_types: List[string]
+    :param ignored_attr_types: List of attribute types that will be ignored
+
+    :type process_url_schemes: List[bytearray]
+    :param process_url_schemes: List of URL schemes to process with urllib.
+        An empty list turns off all URL processing and the attribute is
+        ignored completely.
+
+    :type line_sep: bytearray
+    :param line_sep: line separator
+    """
 
     def _strip_line_sep(self, s):
         """Strip trailing line separators from s, but no other whitespaces."""
@@ -194,22 +211,9 @@ class LDIFParser(object):
     def __init__(
             self,
             input_file,
-            ignored_attr_types=None,
-            process_url_schemes=None,
+            ignored_attr_types=[],
+            process_url_schemes=[],
             line_sep=b'\n'):
-        """
-        Parameters:
-        input_file
-            File-object to read the LDIF input from
-        ignored_attr_types
-            Attributes with these attribute type names will be ignored.
-        process_url_schemes
-            List containing strings with URLs schemes to process with urllib.
-            An empty list turns off all URL processing and the attribute
-            is ignored completely.
-        line_sep
-            String used as line separator
-        """
         self._input_file = input_file
         self._process_url_schemes = lower(process_url_schemes)
         self._ignored_attr_types = lower(ignored_attr_types)
@@ -281,7 +285,7 @@ class LDIFParser(object):
             raise ValueError('changetype value %s is invalid.' % attr_value)
 
     def _parse_record(self, lines):
-        """Parse a singel record from a list of lines."""
+        """Parse a single record from a list of lines."""
         dn = None
         changetype = None
         entry = {}
@@ -307,6 +311,10 @@ class LDIFParser(object):
         return dn, changetype, entry
 
     def parse(self):
-        """Iterate LDIF records (dn, changetype, entry)."""
+        """Iterate LDIF records.
+
+        :rtype: Iterator[Tuple[string, string, Dict]]
+        :return: (dn, changetype, entry)
+        """
         for block in self._iter_blocks():
             yield self._parse_record(block)
