@@ -3,3 +3,4 @@
 .tox
 .cover
 .coverage
+docs/_build
