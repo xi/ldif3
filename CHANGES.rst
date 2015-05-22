@@ -13,3 +13,6 @@ The changes introduced with this version are:
 -   ``LDIFCopy`` and ``LDIFRecordList`` were removed.
 -   ``LDIFParser.handle()`` was removed.  Instead, ``LDIFParser.parse()``
     yields the records.
+-   ``LDIFParser`` has now a ``strict`` option that defaults to ``True``
+    for backwards-compatibility.  If set to ``False``, recoverable parse errors
+    will produce log warnings rather than exceptions.

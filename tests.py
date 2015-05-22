@@ -2,6 +2,11 @@ from __future__ import unicode_literals
 
 import unittest
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 from io import BytesIO
 
 import ldif3
@@ -166,28 +171,38 @@ class TestLDIFParser(unittest.TestCase):
     def test_iter_blocks(self):
         self.assertEqual(list(self.p._iter_blocks()), BLOCKS)
 
-    def test_check_dn_not_none(self):
+    def _test_error(self, fn):
+        self.p._strict = True
         with self.assertRaises(ValueError):
-            self.p._check_dn('some dn', 'mail=alicealison@example.com')
+            fn()
 
-    def test_check_dn_invalid(self):
-        with self.assertRaises(ValueError):
-            self.p._check_dn(None, 'invalid')
+        with mock.patch('ldif3.log.warning') as warning:
+            self.p._strict = False
+            fn()
+            warning.assert_called()
+
+    def test_check_dn_not_none(self):
+        self._test_error(lambda:
+            self.p._check_dn('some dn', 'mail=alicealison@example.com'))
+
+    def test_check_dn_invalid_strict(self):
+        self._test_error(lambda:
+            self.p._check_dn(None, 'invalid'))
 
     def test_check_dn_happy(self):
         self.p._check_dn(None, 'mail=alicealison@example.com')
 
-    def test_check_changetype_dn_none(self):
-        with self.assertRaises(ValueError):
-            self.p._check_changetype(None, None, 'add')
+    def test_check_changetype_dn_none_strict(self):
+        self._test_error(lambda:
+            self.p._check_changetype(None, None, 'add'))
 
-    def test_check_changetype_not_none(self):
-        with self.assertRaises(ValueError):
-            self.p._check_changetype('some dn', 'some changetype', 'add')
+    def test_check_changetype_not_none_strict(self):
+        self._test_error(lambda:
+            self.p._check_changetype('some dn', 'some changetype', 'add'))
 
-    def test_check_changetype_invalid(self):
-        with self.assertRaises(ValueError):
-            self.p._check_changetype('some dn', None, 'invalid')
+    def test_check_changetype_invalid_strict(self):
+        self._test_error(lambda:
+            self.p._check_changetype('some dn', None, 'invalid'))
 
     def test_check_changetype_happy(self):
         self.p._check_changetype('some dn', None, 'add')

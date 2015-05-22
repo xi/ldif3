@@ -14,6 +14,7 @@ __all__ = [
 
 import base64
 import re
+import logging
 
 try:  # pragma: nocover
     from urlparse import urlparse
@@ -22,6 +23,7 @@ except ImportError:  # pragma: nocover
     from urllib.parse import urlparse
     from urllib.request import urlopen
 
+log = logging.getLogger('ldif3')
 
 ATTRTYPE_PATTERN = r'[\w;.-]+(;[\w_-]+)*'
 ATTRVALUE_PATTERN = r'(([^,]|\\,)+|".*?")'
@@ -197,6 +199,10 @@ class LDIFParser(object):
 
     :type line_sep: bytearray
     :param line_sep: line separator
+
+    :type strict: boolean
+    :param strict: If set to ``False``, recoverable parse errors will produce
+        log warnings rather than exceptions.
     """
 
     def _strip_line_sep(self, s):
@@ -213,11 +219,13 @@ class LDIFParser(object):
             input_file,
             ignored_attr_types=[],
             process_url_schemes=[],
-            line_sep=b'\n'):
+            line_sep=b'\n',
+            strict=True):
         self._input_file = input_file
         self._process_url_schemes = lower(process_url_schemes)
         self._ignored_attr_types = lower(ignored_attr_types)
         self._line_sep = line_sep
+        self._strict = strict
 
     def _iter_unfolded_lines(self):
         """Iter input unfoled lines. Skip comments."""
@@ -266,23 +274,28 @@ class LDIFParser(object):
             attr_value = line[colon_pos + 2:].lstrip()
         return attr_type.decode('utf8'), attr_value.decode('utf8')
 
+    def _error(self, msg):
+        if self._strict:
+            raise ValueError(msg)
+        else:
+            log.warning(msg)
+
     def _check_dn(self, dn, attr_value):
         """Check dn attribute for issues."""
         if dn is not None:
-            raise ValueError('Two lines starting with dn: in one record.')
+            self._error('Two lines starting with dn: in one record.')
         if not is_dn(attr_value):
-            raise ValueError('No valid string-representation of '
+            self._error('No valid string-representation of '
                 'distinguished name %s.' % attr_value)
 
     def _check_changetype(self, dn, changetype, attr_value):
         """Check changetype attribute for issues."""
         if dn is None:
-            raise ValueError('Read changetype: before getting valid dn: line.')
+            self._error('Read changetype: before getting valid dn: line.')
         if changetype is not None:
-            raise ValueError('Two lines starting with changetype: '
-                'in one record.')
+            self._error('Two lines starting with changetype: in one record.')
         if attr_value not in CHANGE_TYPES:
-            raise ValueError('changetype value %s is invalid.' % attr_value)
+            self._error('changetype value %s is invalid.' % attr_value)
 
     def _parse_record(self, lines):
         """Parse a single record from a list of lines."""
