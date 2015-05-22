@@ -1,4 +1,4 @@
-3.0.0 (unreleased)
+3.0.0 (2015-05-22)
 ------------------
 
 This is the first version of a fork of the ``ldif`` module from `python-ldap

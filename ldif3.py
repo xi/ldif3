@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 
-__version__ = '2.4.15'
+__version__ = '3.0.0'
 
 __all__ = [
     # constants
