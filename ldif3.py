@@ -15,6 +15,7 @@ __all__ = [
 import base64
 import re
 import logging
+from collections import OrderedDict
 
 try:  # pragma: nocover
     from urlparse import urlparse
@@ -301,7 +302,7 @@ class LDIFParser(object):
         """Parse a single record from a list of lines."""
         dn = None
         changetype = None
-        entry = {}
+        entry = OrderedDict()
 
         for line in lines:
             attr_type, attr_value = self._parse_attr(line)
