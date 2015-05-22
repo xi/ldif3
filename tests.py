@@ -185,22 +185,22 @@ class TestLDIFParser(unittest.TestCase):
         self._test_error(lambda:
             self.p._check_dn('some dn', 'mail=alicealison@example.com'))
 
-    def test_check_dn_invalid_strict(self):
+    def test_check_dn_invalid(self):
         self._test_error(lambda:
             self.p._check_dn(None, 'invalid'))
 
     def test_check_dn_happy(self):
         self.p._check_dn(None, 'mail=alicealison@example.com')
 
-    def test_check_changetype_dn_none_strict(self):
+    def test_check_changetype_dn_none(self):
         self._test_error(lambda:
             self.p._check_changetype(None, None, 'add'))
 
-    def test_check_changetype_not_none_strict(self):
+    def test_check_changetype_not_none(self):
         self._test_error(lambda:
             self.p._check_changetype('some dn', 'some changetype', 'add'))
 
-    def test_check_changetype_invalid_strict(self):
+    def test_check_changetype_invalid(self):
         self._test_error(lambda:
             self.p._check_changetype('some dn', None, 'invalid'))
 
