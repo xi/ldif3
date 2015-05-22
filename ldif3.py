@@ -105,7 +105,7 @@ class LDIFWriter(object):
         self._base64_attrs
         """
         return attr_type.lower() in self._base64_attrs or \
-                UNSAFE_STRING_RE.search(attr_value) is not None
+            UNSAFE_STRING_RE.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
