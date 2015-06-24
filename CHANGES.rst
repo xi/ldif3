@@ -1,3 +1,10 @@
+3.0.2 (2015-06-22)
+------------------
+
+-   Include documentation source and changelog in source distribution.
+    (Thanks to Michael Fladischer)
+-   Add LICENSE file
+
 3.0.1 (2015-05-22)
 ------------------
 
