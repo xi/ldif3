@@ -229,10 +229,9 @@ class TestLDIFParser(unittest.TestCase):
     def test_parse(self):
         items = list(self.p.parse())
         for i, item in enumerate(items):
-            dn, changetype, record = item
+            dn, record = item
 
             self.assertEqual(dn, DNS[i])
-            self.assertEqual(changetype, CHANGETYPES[i])
             self.assertEqual(record, RECORDS[i])
 
 

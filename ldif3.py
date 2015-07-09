@@ -320,12 +320,16 @@ class LDIFParser(object):
                 dn = attr_value
             elif attr_type == 'version' and dn is None:
                 pass  # version = 1
-            elif attr_value is not None and \
-                     attr_type.lower() not in self._ignored_attr_types:
-                if attr_type in entry:
-                    entry[attr_type].append(attr_value)
-                else:
-                    entry[attr_type] = [attr_value]
+            else:
+                if dn is None:
+                    self._error('First line of record does not start '
+                        'with "dn:": %s' % attr_type)
+                if attr_value is not None and \
+                         attr_type.lower() not in self._ignored_attr_types:
+                    if attr_type in entry:
+                        entry[attr_type].append(attr_value)
+                    else:
+                        entry[attr_type] = [attr_value]
 
         return dn, entry
 
