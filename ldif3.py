@@ -260,7 +260,9 @@ class LDIFParser(object):
         colon_pos = line.index(b':')
         attr_type = line[0:colon_pos]
         value_spec = line[colon_pos:colon_pos + 2]
-        if value_spec == b'::':
+        if value_spec == b': ':
+            attr_value = line[colon_pos + 2:].lstrip()
+        elif value_spec == b'::':
             attr_value = base64.decodestring(line[colon_pos + 2:])
         elif value_spec == b':<':
             url = line[colon_pos + 2:].strip()
@@ -271,8 +273,6 @@ class LDIFParser(object):
                     attr_value = urlopen(url.decode('ascii')).read()
         elif value_spec == b':\r\n' or value_spec == b'\n':
             attr_value = b''
-        else:
-            attr_value = line[colon_pos + 2:].lstrip()
         return attr_type.decode('utf8'), attr_value.decode('utf8')
 
     def _error(self, msg):
