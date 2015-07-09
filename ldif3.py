@@ -333,7 +333,45 @@ class LDIFParser(object):
 
         return dn, entry
 
-    def parse(self):
+    def _parse_change_record(self, lines):
+        """Parse a single change record from a list of lines."""
+        dn = None
+        controls = []
+        changetype = 'modify'
+        modops = []
+
+        for line in lines:
+            attr_type, attr_value = self._parse_attr(line)
+
+            if attr_type == 'dn':
+                self._check_dn(dn, attr_value)
+                dn = attr_value
+            elif attr_type == 'version':
+                pass  # version = 1
+            else:
+                if dn is None:
+                    self._error('First line of record does not start '
+                        'with "dn:": %s' % attr_type)
+                if attr_type == 'control':
+                    try:
+                        control_type, criticality, control_value = attr_value.split(' ', 2)
+                    except ValueError:
+                        control_value = None
+                        control_type, criticality = attr_value.split(' ', 1)
+                    controls.append((control_type, criticality, control_value))
+                if attr_type == 'changetype':
+                    changetype = attr_value
+                elif changetype == 'modify':
+                    if modops and attr_type == modops[-1][1]:
+                        modops[-1][2].append(attr_value)
+                    else:
+                        modops.append((attr_type, attr_value, []))
+                else:
+                    pass  # not implemented
+
+        return dn, changetype, modops, controls
+
+    def parse_entry_records(self):
         """Iterate LDIF entry records.
 
         :rtype: Iterator[Tuple[string, Dict]]
@@ -341,3 +379,12 @@ class LDIFParser(object):
         """
         for block in self._iter_blocks():
             yield self._parse_entry_record(block)
+
+    def parse_change_records(self):
+        """Iterate LDIF change records.
+
+        :rtype: Iterator[Tuple[string, string, List, List]]
+        :return: (dn, changetype, modops, controls)
+        """
+        for block in self._iter_blocks():
+            yield self._parse_change_record(block)
