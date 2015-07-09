@@ -228,10 +228,17 @@ class LDIFParser(object):
         self._line_sep = line_sep
         self._strict = strict
 
+        self.line_counter = 0
+        self.byte_counter = 0
+        self.records_read = 0
+
     def _iter_unfolded_lines(self):
         """Iter input unfoled lines. Skip comments."""
         line = self._input_file.readline()
         while line:
+            self.line_counter += 1
+            self.byte_counter += len(line)
+
             line = self._strip_line_sep(line)
 
             nextline = self._input_file.readline()
@@ -250,9 +257,11 @@ class LDIFParser(object):
             if line:
                 lines.append(line)
             else:
+                self.records_read += 1
                 yield lines
                 lines = []
         if lines:
+            self.records_read += 1
             yield lines
 
     def _parse_attr(self, line):
