@@ -307,10 +307,9 @@ class LDIFParser(object):
         if attr_value not in CHANGE_TYPES:
             self._error('changetype value %s is invalid.' % attr_value)
 
-    def _parse_record(self, lines):
-        """Parse a single record from a list of lines."""
+    def _parse_entry_record(self, lines):
+        """Parse a single entry record from a list of lines."""
         dn = None
-        changetype = None
         entry = OrderedDict()
 
         for line in lines:
@@ -321,9 +320,6 @@ class LDIFParser(object):
                 dn = attr_value
             elif attr_type == 'version' and dn is None:
                 pass  # version = 1
-            elif attr_type == 'changetype':
-                self._check_changetype(dn, changetype, attr_value)
-                changetype = attr_value
             elif attr_value is not None and \
                      attr_type.lower() not in self._ignored_attr_types:
                 if attr_type in entry:
@@ -331,13 +327,13 @@ class LDIFParser(object):
                 else:
                     entry[attr_type] = [attr_value]
 
-        return dn, changetype, entry
+        return dn, entry
 
     def parse(self):
-        """Iterate LDIF records.
+        """Iterate LDIF entry records.
 
-        :rtype: Iterator[Tuple[string, string, Dict]]
-        :return: (dn, changetype, entry)
+        :rtype: Iterator[Tuple[string, Dict]]
+        :return: (dn, entry)
         """
         for block in self._iter_blocks():
-            yield self._parse_record(block)
+            yield self._parse_entry_record(block)
