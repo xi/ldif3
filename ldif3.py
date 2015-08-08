@@ -81,7 +81,8 @@ class LDIFWriter(object):
         self._base64_attrs = lower(base64_attrs)
         self._cols = cols
         self._line_sep = line_sep
-        self.records_written = 0
+
+        self.records_written = 0  #: number of records that have been written
 
     def _fold_line(self, line):
         """Write string line as one or more folded lines."""
@@ -228,9 +229,9 @@ class LDIFParser(object):
         self._line_sep = line_sep
         self._strict = strict
 
-        self.line_counter = 0
-        self.byte_counter = 0
-        self.records_read = 0
+        self.line_counter = 0  #: number of lines that have been read
+        self.byte_counter = 0  #: number of bytes that have been read
+        self.records_read = 0  #: number of records that have been read
 
     def _iter_unfolded_lines(self):
         """Iter input unfoled lines. Skip comments."""
