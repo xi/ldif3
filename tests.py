@@ -242,6 +242,7 @@ class TestLDIFParser(unittest.TestCase):
             self.assertEqual(dn, DNS[i])
             self.assertEqual(record, RECORDS[i])
 
+
 class TestLDIFParserEmptyAttrValue(unittest.TestCase):
     def setUp(self):
         self.stream = BytesIO(BYTES_EMPTY_ATTR_VALUE)
@@ -249,9 +250,10 @@ class TestLDIFParserEmptyAttrValue(unittest.TestCase):
 
     def test_parse(self):
         try:
-            items = list(self.p.parse())
+            list(self.p.parse())
         except UnboundLocalError:
             self.fail('UnboundLocalError raised')
+
 
 class TestLDIFWriter(unittest.TestCase):
     def setUp(self):
