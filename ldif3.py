@@ -283,6 +283,8 @@ class LDIFParser(object):
                     attr_value = urlopen(url.decode('ascii')).read()
         elif value_spec == b':\r\n' or value_spec == b'\n':
             attr_value = b''
+        else:
+            attr_value = b''
         return attr_type.decode('utf8'), attr_value.decode('utf8')
 
     def _error(self, msg):
