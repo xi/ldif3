@@ -46,6 +46,14 @@ objectclass: person
 
 """
 
+BYTES_EMPTY_ATTR_VALUE = b"""dn: uid=foo123,dc=ws1,dc=webhosting,o=eim
+uid: foo123
+domainname: foo.bar
+homeDirectory: /foo/bar.local
+aliases:
+aliases: foo.bar
+"""
+
 LINES = [
     b'version: 1',
     b'dn: cn=Alice Alison,mail=alicealison@example.com',
@@ -233,6 +241,18 @@ class TestLDIFParser(unittest.TestCase):
 
             self.assertEqual(dn, DNS[i])
             self.assertEqual(record, RECORDS[i])
+
+
+class TestLDIFParserEmptyAttrValue(unittest.TestCase):
+    def setUp(self):
+        self.stream = BytesIO(BYTES_EMPTY_ATTR_VALUE)
+        self.p = ldif3.LDIFParser(self.stream)
+
+    def test_parse(self):
+        try:
+            list(self.p.parse())
+        except UnboundLocalError:
+            self.fail('UnboundLocalError raised')
 
 
 class TestLDIFWriter(unittest.TestCase):

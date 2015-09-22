@@ -2,7 +2,7 @@
 
 from __future__ import unicode_literals
 
-__version__ = '3.1.0'
+__version__ = '3.1.1'
 
 __all__ = [
     # constants
@@ -282,6 +282,8 @@ class LDIFParser(object):
                 if u[0] in self._process_url_schemes:
                     attr_value = urlopen(url.decode('ascii')).read()
         elif value_spec == b':\r\n' or value_spec == b'\n':
+            attr_value = b''
+        else:
             attr_value = b''
         return attr_type.decode('utf8'), attr_value.decode('utf8')
 
