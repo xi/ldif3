@@ -249,10 +249,7 @@ class TestLDIFParserEmptyAttrValue(unittest.TestCase):
         self.p = ldif3.LDIFParser(self.stream)
 
     def test_parse(self):
-        try:
-            list(self.p.parse())
-        except UnboundLocalError:
-            self.fail('UnboundLocalError raised')
+        list(self.p.parse())
 
 
 class TestLDIFWriter(unittest.TestCase):
