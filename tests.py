@@ -187,7 +187,7 @@ class TestLDIFParser(unittest.TestCase):
         with mock.patch('ldif3.log.warning') as warning:
             self.p._strict = False
             fn()
-            warning.assert_called()
+            assert warning.called
 
     def test_check_dn_not_none(self):
         self._test_error(lambda:
