@@ -269,22 +269,17 @@ class LDIFParser(object):
         """Parse a single attribute type/value pair."""
         colon_pos = line.index(b':')
         attr_type = line[0:colon_pos]
-        value_spec = line[colon_pos:colon_pos + 2]
-        if value_spec == b': ':
-            attr_value = line[colon_pos + 2:].lstrip()
-        elif value_spec == b'::':
+        if line[colon_pos:].startswith(b'::'):
             attr_value = base64.decodestring(line[colon_pos + 2:])
-        elif value_spec == b':<':
+        elif line[colon_pos:].startswith(b':<'):
             url = line[colon_pos + 2:].strip()
             attr_value = b''
             if self._process_url_schemes:
                 u = urlparse(url)
                 if u[0] in self._process_url_schemes:
                     attr_value = urlopen(url.decode('ascii')).read()
-        elif value_spec == b':\r\n' or value_spec == b'\n':
-            attr_value = b''
         else:
-            attr_value = b''
+            attr_value = line[colon_pos + 1:].strip()
         return attr_type.decode('utf8'), attr_value.decode('utf8')
 
     def _error(self, msg):
