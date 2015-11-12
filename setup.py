@@ -1,25 +1,24 @@
 #!/usr/bin/env python
 
 import os
-
+import re
 from setuptools import setup
 
-curdir = os.path.dirname(os.path.abspath(__file__))
+DIRNAME = os.path.abspath(os.path.dirname(__file__))
+rel = lambda *parts: os.path.abspath(os.path.join(DIRNAME, *parts))
 
+README = open(rel('README.rst')).read()
+MAIN = open(rel('ldif3.py')).read()
+VERSION = re.search("__version__ = '([^']+)'", MAIN).group(1)
+NAME = re.search('^"""(.*) - (.*)"""', MAIN).group(1)
+DESCRIPTION = re.search('^"""(.*) - (.*)"""', MAIN).group(2)
 
-with open(os.path.join(curdir, 'ldif3.py')) as fh:
-    for line in fh:
-        if line.startswith('"""'):
-            name, description = line.rstrip().strip('"').split(' - ')
-        elif line.startswith('__version__'):
-            version = line.split('\'')[1]
-            break
 
 setup(
-    name=name,
-    version=version,
-    description=description,
-    long_description=open(os.path.join(curdir, 'README.rst')).read(),
+    name=NAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    long_description=README,
     url='https://github.com/xi/ldif3',
     author='Tobias Bengfort',
     author_email='tobias.bengfort@posteo.de',
