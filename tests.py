@@ -242,6 +242,15 @@ class TestLDIFParser(unittest.TestCase):
             self.assertEqual(dn, DNS[i])
             self.assertEqual(record, RECORDS[i])
 
+    def test_parse_binary(self):
+        self.stream = BytesIO(b"dn: cn=Bjorn J Jensen\njpegPhoto:: 8PLz")
+        self.p = ldif3.LDIFParser(self.stream)
+        items = list(self.p.parse())
+        self.assertEqual(items, [(
+            u'cn=Bjorn J Jensen',
+            {u'jpegPhoto': [b'\xf0\xf2\xf3']}
+        )])
+
 
 class TestLDIFParserEmptyAttrValue(unittest.TestCase):
     def setUp(self):
@@ -337,3 +346,8 @@ class TestLDIFWriter(unittest.TestCase):
     def test_unparse_fail(self):
         with self.assertRaises(ValueError):
             self.w.unparse(DNS[0], 'foo')
+
+    def test_unparse_binary(self):
+        self.w.unparse(u'cn=Bjorn J Jensen', {u'jpegPhoto': [b'\xf0\xf2\xf3']})
+        value = self.stream.getvalue()
+        self.assertEqual(value, b'dn: cn=Bjorn J Jensen\njpegPhoto:: 8PLz\n\n')
