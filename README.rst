@@ -32,11 +32,16 @@ Write LDIF to a file (or ``BytesIO``)::
 Unicode support
 ---------------
 
-The stream object that is passed to parser or writer must be a byte
-stream. It must use UTF-8 encoding as described in the spec.
+The stream object that is passed to parser or writer must be an ascii byte
+stream.
 
-The parsed objects (``dn`` and the keys and values of ``record``) on the
-other hand are unicode strings.
+The spec allows to include arbitrary data in base64 encoding or via URL. There
+is no way of knowing the encoding of this data. To handle this, there are two
+modes:
+
+The default mode will try to interpret everything as UTF-8 and leave only the
+strings that failed to encode/decode as bytes. The strict mode will not try to
+do any conversio and return bytes directly.
 
 
 .. _RFC 2849: https://tools.ietf.org/html/rfc2849
