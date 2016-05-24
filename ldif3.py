@@ -107,12 +107,15 @@ class LDIFWriter(object):
         self._base64_attrs
         """
         return attr_type.lower() in self._base64_attrs or \
+            isinstance(attr_value, bytes) or \
             UNSAFE_STRING_RE.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
         if self._needs_base64_encoding(attr_type, attr_value):
-            encoded = base64.encodestring(attr_value.encode('utf8'))\
+            if not isinstance(attr_value, bytes):
+                attr_value = attr_value.encode('utf8')
+            encoded = base64.encodestring(attr_value)\
                 .replace(b'\n', b'')\
                 .decode('utf8')
             line = ':: '.join([attr_type, encoded])
@@ -280,7 +283,10 @@ class LDIFParser(object):
                     attr_value = urlopen(url.decode('ascii')).read()
         else:
             attr_value = line[colon_pos + 1:].strip()
-        return attr_type.decode('utf8'), attr_value.decode('utf8')
+        try:
+            return attr_type.decode('utf8'), attr_value.decode('utf8')
+        except UnicodeError:
+            return attr_type.decode('utf8'), attr_value
 
     def _error(self, msg):
         if self._strict:
