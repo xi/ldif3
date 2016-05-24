@@ -2,16 +2,6 @@
 
 from __future__ import unicode_literals
 
-__version__ = '3.1.1'
-
-__all__ = [
-    # constants
-    'LDIF_PATTERN',
-    # classes
-    'LDIFWriter',
-    'LDIFParser',
-]
-
 import base64
 import re
 import logging
@@ -23,6 +13,16 @@ try:  # pragma: nocover
 except ImportError:  # pragma: nocover
     from urllib.parse import urlparse
     from urllib.request import urlopen
+
+__version__ = '3.1.1'
+
+__all__ = [
+    # constants
+    'LDIF_PATTERN',
+    # classes
+    'LDIFWriter',
+    'LDIFParser',
+]
 
 log = logging.getLogger('ldif3')
 
