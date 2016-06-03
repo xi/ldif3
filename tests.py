@@ -243,12 +243,27 @@ class TestLDIFParser(unittest.TestCase):
             self.assertEqual(record, RECORDS[i])
 
     def test_parse_binary(self):
-        self.stream = BytesIO(b"dn: cn=Bjorn J Jensen\njpegPhoto:: 8PLz")
+        self.stream = BytesIO(b'dn: cn=Bjorn J Jensen\n'
+            b'jpegPhoto:: 8PLz\nfoo: bar')
         self.p = ldif3.LDIFParser(self.stream)
         items = list(self.p.parse())
         self.assertEqual(items, [(
-            u'cn=Bjorn J Jensen',
-            {u'jpegPhoto': [b'\xf0\xf2\xf3']}
+            u'cn=Bjorn J Jensen', {
+                u'jpegPhoto': [b'\xf0\xf2\xf3'],
+                u'foo': [u'bar'],
+            }
+        )])
+
+    def test_parse_binary_raw(self):
+        self.stream = BytesIO(b'dn: cn=Bjorn J Jensen\n'
+            b'jpegPhoto:: 8PLz\nfoo: bar')
+        self.p = ldif3.LDIFParser(self.stream, encoding=None)
+        items = list(self.p.parse())
+        self.assertEqual(items, [(
+            'cn=Bjorn J Jensen', {
+                u'jpegPhoto': [b'\xf0\xf2\xf3'],
+                u'foo': [b'bar'],
+            }
         )])
 
 
