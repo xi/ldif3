@@ -1,3 +1,20 @@
+3.2.0 (2016-06-03)
+------------------
+
+-   Overhaule the unicode support to also support binary data (e.g. images)
+    encoded in LDIF.
+
+    You can now pass an encoding to the parser which will be used to decode
+    values. If decoding failes, a bytestring will be returned.  If you pass an
+    encoding of ``None``, the parser will not try to do any conversion and
+    return bytes directly.
+
+    This change should be completely backwards compatible, as the parser now
+    gracefully handles a case where it crashed previously.
+
+    (See `#4 <https://github.com/xi/ldif3/issues/4>`_)
+
+
 3.1.1 (2015-09-20)
 ------------------
 
