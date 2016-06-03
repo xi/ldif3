@@ -1,3 +1,5 @@
+# -*- encoding: utf8 -*-
+
 from __future__ import unicode_literals
 
 import unittest
@@ -366,3 +368,8 @@ class TestLDIFWriter(unittest.TestCase):
         self.w.unparse(u'cn=Bjorn J Jensen', {u'jpegPhoto': [b'\xf0\xf2\xf3']})
         value = self.stream.getvalue()
         self.assertEqual(value, b'dn: cn=Bjorn J Jensen\njpegPhoto:: 8PLz\n\n')
+
+    def test_unparse_unicode_dn(self):
+        self.w.unparse(u'cn=Björn J Jensen', {u'foo': [u'bar']})
+        value = self.stream.getvalue()
+        self.assertEqual(value, b'dn:: Y249QmrDtnJuIEogSmVuc2Vu\nfoo: bar\n\n')
