@@ -73,14 +73,25 @@ class LDIFWriter(object):
 
     :type line_sep: bytearray
     :param line_sep: line separator
+
+    :type encoding: string
+    :param encoding: Encoding to use for converting values to bytes.  Note that
+        the spec requires the dn field to be UTF-8 encoded, so it does not
+        really make sense to use anything else.  Default: ``'utf8'``.
     """
 
     def __init__(
-            self, output_file, base64_attrs=[], cols=76, line_sep=b'\n'):
+            self,
+            output_file,
+            base64_attrs=[],
+            cols=76,
+            line_sep=b'\n',
+            encoding='utf8'):
         self._output_file = output_file
         self._base64_attrs = lower(base64_attrs)
         self._cols = cols
         self._line_sep = line_sep
+        self._encoding = encoding
 
         self.records_written = 0  #: number of records that have been written
 
@@ -107,18 +118,21 @@ class LDIFWriter(object):
         self._base64_attrs
         """
         return attr_type.lower() in self._base64_attrs or \
+            isinstance(attr_value, bytes) or \
             UNSAFE_STRING_RE.search(attr_value) is not None
 
     def _unparse_attr(self, attr_type, attr_value):
         """Write a single attribute type/value pair."""
         if self._needs_base64_encoding(attr_type, attr_value):
-            encoded = base64.encodestring(attr_value.encode('utf8'))\
+            if not isinstance(attr_value, bytes):
+                attr_value = attr_value.encode(self._encoding)
+            encoded = base64.encodestring(attr_value)\
                 .replace(b'\n', b'')\
-                .decode('utf8')
+                .decode('ascii')
             line = ':: '.join([attr_type, encoded])
         else:
             line = ': '.join([attr_type, attr_value])
-        self._fold_line(line.encode('utf8'))
+        self._fold_line(line.encode('ascii'))
 
     def _unparse_entry_record(self, entry):
         """
@@ -202,6 +216,13 @@ class LDIFParser(object):
     :type line_sep: bytearray
     :param line_sep: line separator
 
+    :type encoding: string
+    :param encoding: Encoding to use for converting values to unicode strings.
+        If decoding failes, the raw bytestring will be used instead. You can
+        also pass ``None`` which will skip decoding and always produce
+        bytestrings. Note that this only applies to entry values. ``dn`` and
+        entry keys will always be unicode strings.
+
     :type strict: boolean
     :param strict: If set to ``False``, recoverable parse errors will produce
         log warnings rather than exceptions.
@@ -222,11 +243,13 @@ class LDIFParser(object):
             ignored_attr_types=[],
             process_url_schemes=[],
             line_sep=b'\n',
+            encoding='utf8',
             strict=True):
         self._input_file = input_file
         self._process_url_schemes = lower(process_url_schemes)
         self._ignored_attr_types = lower(ignored_attr_types)
         self._line_sep = line_sep
+        self._encoding = encoding
         self._strict = strict
 
         self.line_counter = 0  #: number of lines that have been read
@@ -268,7 +291,8 @@ class LDIFParser(object):
     def _parse_attr(self, line):
         """Parse a single attribute type/value pair."""
         colon_pos = line.index(b':')
-        attr_type = line[0:colon_pos]
+        attr_type = line[0:colon_pos].decode('ascii')
+
         if line[colon_pos:].startswith(b'::'):
             attr_value = base64.decodestring(line[colon_pos + 2:])
         elif line[colon_pos:].startswith(b':<'):
@@ -280,7 +304,15 @@ class LDIFParser(object):
                     attr_value = urlopen(url.decode('ascii')).read()
         else:
             attr_value = line[colon_pos + 1:].strip()
-        return attr_type.decode('utf8'), attr_value.decode('utf8')
+
+        if attr_type == u'dn':
+            return attr_type, attr_value.decode('utf8')
+        elif self._encoding is not None:
+            try:
+                return attr_type, attr_value.decode(self._encoding)
+            except UnicodeError:
+                pass
+        return attr_type, attr_value
 
     def _error(self, msg):
         if self._strict:

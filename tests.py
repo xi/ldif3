@@ -1,3 +1,5 @@
+# -*- encoding: utf8 -*-
+
 from __future__ import unicode_literals
 
 import unittest
@@ -242,6 +244,30 @@ class TestLDIFParser(unittest.TestCase):
             self.assertEqual(dn, DNS[i])
             self.assertEqual(record, RECORDS[i])
 
+    def test_parse_binary(self):
+        self.stream = BytesIO(b'dn: cn=Bjorn J Jensen\n'
+            b'jpegPhoto:: 8PLz\nfoo: bar')
+        self.p = ldif3.LDIFParser(self.stream)
+        items = list(self.p.parse())
+        self.assertEqual(items, [(
+            u'cn=Bjorn J Jensen', {
+                u'jpegPhoto': [b'\xf0\xf2\xf3'],
+                u'foo': [u'bar'],
+            }
+        )])
+
+    def test_parse_binary_raw(self):
+        self.stream = BytesIO(b'dn: cn=Bjorn J Jensen\n'
+            b'jpegPhoto:: 8PLz\nfoo: bar')
+        self.p = ldif3.LDIFParser(self.stream, encoding=None)
+        items = list(self.p.parse())
+        self.assertEqual(items, [(
+            'cn=Bjorn J Jensen', {
+                u'jpegPhoto': [b'\xf0\xf2\xf3'],
+                u'foo': [b'bar'],
+            }
+        )])
+
 
 class TestLDIFParserEmptyAttrValue(unittest.TestCase):
     def setUp(self):
@@ -337,3 +363,13 @@ class TestLDIFWriter(unittest.TestCase):
     def test_unparse_fail(self):
         with self.assertRaises(ValueError):
             self.w.unparse(DNS[0], 'foo')
+
+    def test_unparse_binary(self):
+        self.w.unparse(u'cn=Bjorn J Jensen', {u'jpegPhoto': [b'\xf0\xf2\xf3']})
+        value = self.stream.getvalue()
+        self.assertEqual(value, b'dn: cn=Bjorn J Jensen\njpegPhoto:: 8PLz\n\n')
+
+    def test_unparse_unicode_dn(self):
+        self.w.unparse(u'cn=Björn J Jensen', {u'foo': [u'bar']})
+        value = self.stream.getvalue()
+        self.assertEqual(value, b'dn:: Y249QmrDtnJuIEogSmVuc2Vu\nfoo: bar\n\n')
