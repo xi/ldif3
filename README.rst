@@ -39,9 +39,10 @@ The spec allows to include arbitrary data in base64 encoding or via URL. There
 is no way of knowing the encoding of this data. To handle this, there are two
 modes:
 
-The default mode will try to interpret everything as UTF-8 and leave only the
-strings that failed to encode/decode as bytes. The strict mode will not try to
-do any conversio and return bytes directly.
+By default, the ``LDIFParser`` will try to interpret all values as UTF-8 and
+leave only the ones that fail to decode as bytes. But you can also pass an
+``encoding`` of ``None`` to the constructor, in which case the parser will not
+try to do any conversion and return bytes directly.
 
 
 .. _RFC 2849: https://tools.ietf.org/html/rfc2849
