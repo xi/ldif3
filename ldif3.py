@@ -280,7 +280,7 @@ class LDIFParser(object):
         for line in self._iter_unfolded_lines():
             if line:
                 lines.append(line)
-            else:
+            elif lines:
                 self.records_read += 1
                 yield lines
                 lines = []

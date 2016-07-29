@@ -32,6 +32,8 @@ mail: foobar@example.org
 modifytimestamp: 4a463e9a
 """
 
+BYTES_SPACE = b'\n\n'.join([block + b'\n' for block in BYTES.split(b'\n\n')])
+
 BYTES_OUT = b"""dn: cn=Alice Alison,mail=alicealison@example.com
 cn: Alison Alison
 mail: alicealison@example.com
@@ -179,6 +181,11 @@ class TestLDIFParser(unittest.TestCase):
         self.assertEqual(list(self.p._iter_unfolded_lines()), LINES)
 
     def test_iter_blocks(self):
+        self.assertEqual(list(self.p._iter_blocks()), BLOCKS)
+
+    def test_iter_blocks_with_additional_spaces(self):
+        self.stream = BytesIO(BYTES_SPACE)
+        self.p = ldif3.LDIFParser(self.stream)
         self.assertEqual(list(self.p._iter_blocks()), BLOCKS)
 
     def _test_error(self, fn):
