@@ -243,6 +243,18 @@ class TestLDIFParser(unittest.TestCase):
         attr_type, attr_value = self.p._parse_attr(b'foo:< ' + URL + b'\n')
         self.assertEqual(attr_value, '')
 
+    def test_parse_attr_dn_non_utf8(self):
+        def run():
+            attr = (
+                b'dn: \x75\x69\x64\x3d\x6b\x6f\xb3\x6f\x62'
+                b'\x69\x7a\x6e\x65\x73\x75\x40\x77\n'
+            )
+            attr_type, attr_value = self.p._parse_attr(attr)
+            self.assertEqual(attr_type, 'dn')
+            self.assertEqual(attr_value, 'uid=koobiznesu@w')
+
+        self._test_error(run)
+
     def test_parse(self):
         items = list(self.p.parse())
         for i, item in enumerate(items):
