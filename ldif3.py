@@ -14,7 +14,7 @@ except ImportError:  # pragma: nocover
     from urllib.parse import urlparse
     from urllib.request import urlopen
 
-__version__ = '3.2.0'
+__version__ = '3.2.1'
 
 __all__ = [
     # constants
