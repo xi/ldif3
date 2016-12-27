@@ -288,6 +288,22 @@ class LDIFParser(object):
             self.records_read += 1
             yield lines
 
+    def _decode_value(self, attr_type, attr_value):
+        if attr_type == u'dn':
+            try:
+                return attr_type, attr_value.decode('utf8')
+            except UnicodeError as err:
+                self._error(err)
+                return attr_type, attr_value.decode('utf8', 'ignore')
+
+        elif self._encoding is not None:
+            try:
+                return attr_type, attr_value.decode(self._encoding)
+            except UnicodeError:
+                pass
+
+        return attr_type, attr_value
+
     def _parse_attr(self, line):
         """Parse a single attribute type/value pair."""
         colon_pos = line.index(b':')
@@ -305,14 +321,7 @@ class LDIFParser(object):
         else:
             attr_value = line[colon_pos + 1:].strip()
 
-        if attr_type == u'dn':
-            return attr_type, attr_value.decode('utf8')
-        elif self._encoding is not None:
-            try:
-                return attr_type, attr_value.decode(self._encoding)
-            except UnicodeError:
-                pass
-        return attr_type, attr_value
+        return self._decode_value(attr_type, attr_value)
 
     def _error(self, msg):
         if self._strict:
