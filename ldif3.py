@@ -48,7 +48,7 @@ def is_dn(s):
     return rm is not None and rm.group(0) == s
 
 
-UNSAFE_STRING_PATTERN = '(^[ :<]|[\000\n\r\200-\377])'
+UNSAFE_STRING_PATTERN = '(^[^\x01-\x09\x0b-\x0c\x0e-\x1f\x21-\x39\x3b\x3d-\x7f]|[^\x01-\x09\x0b-\x0c\x0e-\x7f])'
 UNSAFE_STRING_RE = re.compile(UNSAFE_STRING_PATTERN)
 
 
