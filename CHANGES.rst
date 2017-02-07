@@ -1,8 +1,15 @@
+3.2.2 (2017-02-07)
+------------------
+
+-   Fix detection of unsafe strings in ``unparse`` (See `#7
+    <https://github.com/xi/ldif3/pull/7>`_)
+
+
 3.2.1 (2016-12-27)
 ------------------
 
--   Ignore non-unicode characters in "dn" in non-strict mode. (Fixes `#4
-    https://github.com/xi/ldif3/issues/6`_)
+-   Ignore non-unicode characters in "dn" in non-strict mode. (Fixes `#5
+    <https://github.com/xi/ldif3/issues/6>`_)
 
 
 3.2.0 (2016-06-03)
