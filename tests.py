@@ -392,3 +392,8 @@ class TestLDIFWriter(unittest.TestCase):
         self.w.unparse(u'cn=Björn J Jensen', {u'foo': [u'bar']})
         value = self.stream.getvalue()
         self.assertEqual(value, b'dn:: Y249QmrDtnJuIEogSmVuc2Vu\nfoo: bar\n\n')
+
+    def test_unparse_uniqode(self):
+        self.w.unparse("o=x", {'test': [u'日本語']})
+        value = self.stream.getvalue()
+        self.assertEqual(value, b'dn: o=x\ntest:: 5pel5pys6Kqe\n\n')
