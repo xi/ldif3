@@ -4,6 +4,13 @@ This is a fork of the ``ldif`` module from `python-ldap`_ with python3/unicode
 support. See the first entry in CHANGES.rst for a more complete list of
 differences.
 
+Deprecated
+----------
+
+python-ldap will support python3/unicode in the upcoming `3.x
+<https://github.com/python-ldap/python-ldap/blob/master/CHANGES>`_ version.
+There is no longer a reason to use this project.
+
 Usage
 -----
 
